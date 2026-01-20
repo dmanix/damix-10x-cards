@@ -1,0 +1,14 @@
+---
+import Layout from "../layouts/Layout.astro";
+import GenerateView from "../components/generate/GenerateView";
+
+// TODO: W przyszłości dodać sprawdzenie sesji użytkownika
+// const { data: { user }, error } = await Astro.locals.supabase.auth.getUser();
+// if (!user) {
+//   return Astro.redirect("/auth/login?returnTo=/generate");
+// }
+---
+
+<Layout title="Generuj fiszki - 10x Cards">
+  <GenerateView client:load />
+</Layout>
