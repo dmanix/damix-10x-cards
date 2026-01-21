@@ -61,7 +61,10 @@ export function ProposalEditor({ initialFront, initialBack, onSaveAndAccept, onC
   };
 
   return (
-    <div className="space-y-4 rounded-lg border-2 border-primary/50 bg-accent/30 p-4" onKeyDown={handleKeyDown}>
+    <div
+      className="space-y-4 rounded-sm border border-border border-l-4 border-l-primary bg-card p-4"
+      onKeyDown={handleKeyDown}
+    >
       <div className="mb-2 flex items-center gap-2">
         <span className="text-sm font-medium">Edycja propozycji</span>
         <span className="text-xs text-muted-foreground">(Ctrl+Enter zapisuje, Esc anuluje)</span>
@@ -78,7 +81,7 @@ export function ProposalEditor({ initialFront, initialBack, onSaveAndAccept, onC
           value={front}
           onChange={(e) => setFront(e.target.value)}
           placeholder="Pytanie lub pojęcie..."
-          className="min-h-[80px] resize-y"
+          className="min-h-[80px] resize-y rounded-sm"
           aria-invalid={!!frontError}
           aria-describedby={frontError ? "front-error" : "front-counter"}
         />
@@ -107,7 +110,7 @@ export function ProposalEditor({ initialFront, initialBack, onSaveAndAccept, onC
           value={back}
           onChange={(e) => setBack(e.target.value)}
           placeholder="Odpowiedź lub definicja..."
-          className="min-h-[120px] resize-y"
+          className="min-h-[120px] resize-y rounded-sm"
           aria-invalid={!!backError}
           aria-describedby={backError ? "back-error" : "back-counter"}
         />
@@ -128,10 +131,10 @@ export function ProposalEditor({ initialFront, initialBack, onSaveAndAccept, onC
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-2">
-        <Button onClick={handleSave} disabled={!canSave} size="sm" className="flex-1">
+        <Button onClick={handleSave} disabled={!canSave} size="sm" className="flex-1 rounded-sm">
           Zapisz i zaakceptuj
         </Button>
-        <Button onClick={onCancel} variant="outline" size="sm">
+        <Button onClick={onCancel} variant="outline" size="sm" className="rounded-sm">
           Anuluj
         </Button>
       </div>

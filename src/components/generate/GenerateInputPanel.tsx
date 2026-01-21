@@ -46,7 +46,7 @@ export function GenerateInputPanel({
   };
 
   return (
-    <div className="space-y-4 rounded-lg border bg-card p-6 shadow-sm">
+    <div className="space-y-4 rounded-sm border border-border bg-card p-6">
       <div className="space-y-2">
         <label htmlFor="input-text" className="text-sm font-medium leading-none">
           Materiał do nauki
@@ -58,7 +58,7 @@ export function GenerateInputPanel({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Wklej tekst z którego chcesz wygenerować fiszki... (min. 1000 znaków)"
-          className="min-h-[240px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-[240px] w-full resize-y rounded-sm border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isGenerating}
           aria-invalid={!!validationMessage}
           aria-describedby={
@@ -101,18 +101,18 @@ export function GenerateInputPanel({
       {isDailyLimitReached && dailyLimit && (
         <div
           id="daily-limit-message"
-          className="rounded-md border border-amber-500/50 bg-amber-50 p-3 dark:bg-amber-950/20"
+          className="rounded-sm border border-border border-l-4 border-l-amber-600 bg-card p-3"
           role="alert"
         >
-          <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+          <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
             Wykorzystałeś dzienny limit generowań
           </p>
-          <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+          <p className="mt-1 text-xs text-muted-foreground">
             Limit odnowi się: {new Date(dailyLimit.resetsAtUtc).toLocaleString("pl-PL")}
           </p>
           <a
             href="/account"
-            className="mt-2 inline-block text-xs font-medium text-amber-900 underline hover:no-underline dark:text-amber-200"
+            className="mt-2 inline-block text-xs font-medium text-amber-700 underline hover:no-underline dark:text-amber-300"
           >
             Zobacz szczegóły konta →
           </a>

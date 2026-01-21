@@ -291,20 +291,18 @@ export default function GenerateView({ initialText = "" }: GenerateViewProps) {
 
           {/* Success Notice */}
           {saveSuccess && (
-            <div className="rounded-lg border border-green-500/50 bg-green-50 p-4 dark:bg-green-950/20" role="alert">
+            <div className="rounded-sm border border-border border-l-4 border-l-green-600 bg-card p-4" role="alert">
               <div className="flex items-start gap-3">
-                <span className="text-2xl" aria-hidden="true">
+                <span className="text-2xl text-green-700 dark:text-green-300" aria-hidden="true">
                   ✓
                 </span>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-green-900 dark:text-green-200">Fiszki zostały zapisane!</p>
-                  <p className="mt-1 text-xs text-green-800 dark:text-green-300">
-                    Możesz rozpocząć generowanie kolejnych fiszek.
-                  </p>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-300">Fiszki zostały zapisane!</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Możesz rozpocząć generowanie kolejnych fiszek.</p>
                 </div>
                 <button
                   onClick={() => setSaveSuccess(false)}
-                  className="inline-flex items-center rounded-md border border-green-700 px-2 py-1 text-xs font-medium text-green-900 hover:bg-green-100 dark:border-green-600 dark:text-green-200 dark:hover:bg-green-950/50"
+                  className="inline-flex items-center rounded-sm border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-muted"
                 >
                   Zamknij
                 </button>

@@ -14,7 +14,10 @@ export function ProposalsSummaryBar({ summary, onSaveAll, onSaveApproved, isSavi
   const canSaveApproved = summary.acceptedCount > 0 && !isSaving;
 
   return (
-    <aside className="sticky top-0 z-10 rounded-lg border bg-card p-4 shadow-md" aria-label="Podsumowanie propozycji">
+    <aside
+      className="sticky top-0 z-10 rounded-sm border border-border bg-card p-4"
+      aria-label="Podsumowanie propozycji"
+    >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         {/* Statystyki */}
         <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -26,7 +29,7 @@ export function ProposalsSummaryBar({ summary, onSaveAll, onSaveApproved, isSavi
           <div className="h-4 w-px bg-border" aria-hidden="true" />
 
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-green-500" aria-hidden="true" />
+            <div className="h-3 w-3 rounded-full bg-green-600" aria-hidden="true" />
             <span className="text-muted-foreground">Zaakceptowane:</span>
             <span className="font-semibold text-green-700 dark:text-green-400">{summary.acceptedCount}</span>
           </div>

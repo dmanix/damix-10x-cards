@@ -55,13 +55,13 @@ export function ProposalCard({
   };
 
   const getCardClassName = () => {
-    const base = "transition-colors";
+    const base = "transition-colors border border-border bg-card rounded-sm shadow-none";
     switch (decision) {
       case "accepted_original":
       case "accepted_edited":
-        return `${base} border-green-500/50 bg-green-50/50 dark:bg-green-950/20`;
+        return `${base} border-l-4 border-l-green-600/70`;
       case "rejected":
-        return `${base} border-destructive/50 bg-destructive/5 opacity-60`;
+        return `${base} border-l-4 border-l-destructive/70 opacity-70`;
       default:
         return base;
     }
@@ -88,7 +88,7 @@ export function ProposalCard({
       role="article"
       aria-label={index ? `Propozycja ${index}` : undefined}
     >
-      <CardHeader className="border-b px-3 pb-2 h-8">
+      <CardHeader className="border-b border-border px-3 pb-2 h-8">
         <div className="flex items-center justify-between gap-2">
           <Badge variant={getBadgeVariant()} role="status" className="text-xs py-0.5 px-2">
             {getBadgeText()}
@@ -119,16 +119,28 @@ export function ProposalCard({
           </div>
 
           {/* Actions - always at bottom */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t mt-2">
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border mt-2">
             {decision === "unreviewed" && (
               <>
-                <Button onClick={onAccept} variant="default" size="icon" className="h-8 w-8" title="Zaakceptuj">
+                <Button
+                  onClick={onAccept}
+                  variant="default"
+                  size="icon"
+                  className="h-8 w-8 rounded-sm"
+                  title="Zaakceptuj"
+                >
                   <Check className="h-4 w-4" />
                 </Button>
-                <Button onClick={onReject} variant="destructive" size="icon" className="h-8 w-8" title="Odrzuć">
+                <Button
+                  onClick={onReject}
+                  variant="destructive"
+                  size="icon"
+                  className="h-8 w-8 rounded-sm"
+                  title="Odrzuć"
+                >
                   <X className="h-4 w-4" />
                 </Button>
-                <Button onClick={onEdit} variant="outline" size="icon" className="h-8 w-8" title="Edytuj">
+                <Button onClick={onEdit} variant="outline" size="icon" className="h-8 w-8 rounded-sm" title="Edytuj">
                   <Pencil className="h-4 w-4" />
                 </Button>
               </>
@@ -136,19 +148,19 @@ export function ProposalCard({
 
             {(decision === "accepted_original" || decision === "accepted_edited") && (
               <>
-                <Button onClick={onEdit} variant="outline" size="icon" className="h-8 w-8" title="Edytuj">
+                <Button onClick={onEdit} variant="outline" size="icon" className="h-8 w-8 rounded-sm" title="Edytuj">
                   <Pencil className="h-4 w-4" />
                 </Button>
                 <Button
                   onClick={onUndoDecision}
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 rounded-sm"
                   title="Cofnij akceptację"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
-                <Button onClick={onReject} variant="outline" size="icon" className="h-8 w-8" title="Odrzuć">
+                <Button onClick={onReject} variant="outline" size="icon" className="h-8 w-8 rounded-sm" title="Odrzuć">
                   <X className="h-4 w-4" />
                 </Button>
               </>
@@ -159,7 +171,7 @@ export function ProposalCard({
                 onClick={onUndoDecision}
                 variant="outline"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 rounded-sm"
                 title="Cofnij odrzucenie"
               >
                 <RotateCcw className="h-4 w-4" />

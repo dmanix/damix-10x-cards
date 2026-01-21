@@ -30,43 +30,43 @@ export function GenerationErrorNotice({ error, onRetry, onDismiss }: GenerationE
   const getBorderColor = (kind: ApiErrorVm["kind"]) => {
     switch (kind) {
       case "daily_limit":
-        return "border-amber-500/50";
+        return "border-l-amber-600";
       case "low_quality":
-        return "border-orange-500/50";
+        return "border-l-orange-600";
       case "validation":
-        return "border-destructive/50";
+        return "border-l-destructive";
       case "network":
-        return "border-blue-500/50";
+        return "border-l-blue-600";
       default:
-        return "border-destructive/50";
+        return "border-l-destructive";
     }
   };
 
   const getBackgroundColor = (kind: ApiErrorVm["kind"]) => {
     switch (kind) {
       case "daily_limit":
-        return "bg-amber-50 dark:bg-amber-950/20";
+        return "bg-card";
       case "low_quality":
-        return "bg-orange-50 dark:bg-orange-950/20";
+        return "bg-card";
       case "validation":
-        return "bg-destructive/10";
+        return "bg-card";
       case "network":
-        return "bg-blue-50 dark:bg-blue-950/20";
+        return "bg-card";
       default:
-        return "bg-destructive/10";
+        return "bg-card";
     }
   };
 
   const getTextColor = (kind: ApiErrorVm["kind"]) => {
     switch (kind) {
       case "daily_limit":
-        return "text-amber-900 dark:text-amber-200";
+        return "text-amber-700 dark:text-amber-300";
       case "low_quality":
-        return "text-orange-900 dark:text-orange-200";
+        return "text-orange-700 dark:text-orange-300";
       case "validation":
         return "text-destructive";
       case "network":
-        return "text-blue-900 dark:text-blue-200";
+        return "text-blue-700 dark:text-blue-300";
       default:
         return "text-destructive";
     }
@@ -75,7 +75,9 @@ export function GenerationErrorNotice({ error, onRetry, onDismiss }: GenerationE
   return (
     <div
       role="alert"
-      className={`rounded-lg border p-4 ${getBorderColor(error.kind)} ${getBackgroundColor(error.kind)}`}
+      className={`rounded-sm border border-border border-l-4 p-4 ${getBorderColor(error.kind)} ${getBackgroundColor(
+        error.kind
+      )}`}
     >
       <div className="flex items-start gap-3">
         <span className="text-2xl" aria-hidden="true">
