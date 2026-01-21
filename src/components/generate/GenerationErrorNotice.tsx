@@ -106,7 +106,7 @@ export function GenerationErrorNotice({ error, onRetry, onDismiss }: GenerationE
             )}
 
             {onDismiss && (
-              <Button onClick={onDismiss} variant="ghost" size="sm">
+              <Button onClick={onDismiss} variant="outline" size="sm">
                 Zamknij
               </Button>
             )}

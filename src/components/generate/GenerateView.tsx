@@ -10,10 +10,9 @@ import type { CreateFlashcardsCommand } from "@/types";
 
 interface GenerateViewProps {
   initialText?: string;
-  returnToOnAuth?: string;
 }
 
-export default function GenerateView({ initialText = "", returnToOnAuth = "/generate" }: GenerateViewProps) {
+export default function GenerateView({ initialText = "" }: GenerateViewProps) {
   // Stan formularza
   const [inputText, setInputText] = useState(initialText);
   const [inputTouched, setInputTouched] = useState(false);
@@ -92,7 +91,7 @@ export default function GenerateView({ initialText = "", returnToOnAuth = "/gene
       if (err && typeof err === "object" && "kind" in err) {
         setError(err as ApiErrorVm);
       } else if (err instanceof Error) {
-        setError(mapNetworkError(err));
+        setError(mapNetworkError());
       } else {
         setError({
           kind: "unknown",
@@ -201,13 +200,15 @@ export default function GenerateView({ initialText = "", returnToOnAuth = "/gene
     try {
       await saveFlashcards(command);
       setSaveSuccess(true);
-      // Opcjonalnie: przekierowanie po sukcesie
-      // setTimeout(() => window.location.href = "/flashcards", 1500);
+      setGenerationSession(null);
+      setProposals([]);
+      setInputText("");
+      setInputTouched(false);
     } catch (err) {
       if (err && typeof err === "object" && "kind" in err) {
         setError(err as ApiErrorVm);
       } else if (err instanceof Error && err.message !== "Unauthorized") {
-        setError(mapNetworkError(err));
+        setError(mapNetworkError());
       }
       // Jeśli Unauthorized, to już nastąpił redirect
     } finally {
@@ -226,13 +227,15 @@ export default function GenerateView({ initialText = "", returnToOnAuth = "/gene
     try {
       await saveFlashcards(command);
       setSaveSuccess(true);
-      // Opcjonalnie: przekierowanie po sukcesie
-      // setTimeout(() => window.location.href = "/flashcards", 1500);
+      setGenerationSession(null);
+      setProposals([]);
+      setInputText("");
+      setInputTouched(false);
     } catch (err) {
       if (err && typeof err === "object" && "kind" in err) {
         setError(err as ApiErrorVm);
       } else if (err instanceof Error && err.message !== "Unauthorized") {
-        setError(mapNetworkError(err));
+        setError(mapNetworkError());
       }
       // Jeśli Unauthorized, to już nastąpił redirect
     } finally {
@@ -296,28 +299,15 @@ export default function GenerateView({ initialText = "", returnToOnAuth = "/gene
                 <div className="flex-1">
                   <p className="text-sm font-medium text-green-900 dark:text-green-200">Fiszki zostały zapisane!</p>
                   <p className="mt-1 text-xs text-green-800 dark:text-green-300">
-                    Możesz teraz przejść do swojej kolekcji lub wygenerować kolejne fiszki.
+                    Możesz rozpocząć generowanie kolejnych fiszek.
                   </p>
-                  <div className="mt-3 flex gap-2">
-                    <a
-                      href="/flashcards"
-                      className="inline-flex items-center rounded-md bg-green-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
-                    >
-                      Przejdź do kolekcji →
-                    </a>
-                    <button
-                      onClick={() => {
-                        setGenerationSession(null);
-                        setProposals([]);
-                        setSaveSuccess(false);
-                        setInputText("");
-                      }}
-                      className="inline-flex items-center rounded-md border border-green-700 px-3 py-1.5 text-xs font-medium text-green-900 hover:bg-green-100 dark:border-green-600 dark:text-green-200 dark:hover:bg-green-950/50"
-                    >
-                      Generuj kolejne
-                    </button>
-                  </div>
                 </div>
+                <button
+                  onClick={() => setSaveSuccess(false)}
+                  className="inline-flex items-center rounded-md border border-green-700 px-2 py-1 text-xs font-medium text-green-900 hover:bg-green-100 dark:border-green-600 dark:text-green-200 dark:hover:bg-green-950/50"
+                >
+                  Zamknij
+                </button>
               </div>
             </div>
           )}
@@ -325,7 +315,6 @@ export default function GenerateView({ initialText = "", returnToOnAuth = "/gene
           {/* Proposals Panel */}
           {generationSession && proposals.length > 0 && (
             <ProposalsReviewPanel
-              session={generationSession}
               proposals={proposals}
               onAccept={handleAccept}
               onReject={handleReject}

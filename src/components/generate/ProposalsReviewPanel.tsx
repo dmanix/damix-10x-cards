@@ -2,10 +2,9 @@ import { useMemo } from "react";
 import { ProposalsSummaryBar } from "./ProposalsSummaryBar";
 import { ProposalCard } from "./ProposalCard";
 import { calculateSummary } from "./types";
-import type { GenerationSessionVm, ProposalVm } from "./types";
+import type { ProposalVm } from "./types";
 
 interface ProposalsReviewPanelProps {
-  session: GenerationSessionVm;
   proposals: ProposalVm[];
   onAccept: (id: string) => void;
   onReject: (id: string) => void;
@@ -19,7 +18,6 @@ interface ProposalsReviewPanelProps {
 }
 
 export function ProposalsReviewPanel({
-  session,
   proposals,
   onAccept,
   onReject,
@@ -54,20 +52,23 @@ export function ProposalsReviewPanel({
       />
 
       {/* Lista propozycji */}
-      <div className="space-y-4" role="list" aria-label="Lista propozycji fiszek">
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr"
+        role="list"
+        aria-label="Lista propozycji fiszek"
+      >
         {proposals.map((proposal, index) => (
-          <div key={proposal.id} role="listitem">
-            <ProposalCard
-              proposal={proposal}
-              index={index + 1}
-              onAccept={() => onAccept(proposal.id)}
-              onReject={() => onReject(proposal.id)}
-              onUndoDecision={() => onUndoDecision(proposal.id)}
-              onEdit={() => onStartEdit(proposal.id)}
-              onCancelEdit={() => onCancelEdit(proposal.id)}
-              onSaveEditAndAccept={(front, back) => onSaveEditAndAccept(proposal.id, front, back)}
-            />
-          </div>
+          <ProposalCard
+            key={proposal.id}
+            proposal={proposal}
+            index={index + 1}
+            onAccept={() => onAccept(proposal.id)}
+            onReject={() => onReject(proposal.id)}
+            onUndoDecision={() => onUndoDecision(proposal.id)}
+            onEdit={() => onStartEdit(proposal.id)}
+            onCancelEdit={() => onCancelEdit(proposal.id)}
+            onSaveEditAndAccept={(front, back) => onSaveEditAndAccept(proposal.id, front, back)}
+          />
         ))}
       </div>
     </section>

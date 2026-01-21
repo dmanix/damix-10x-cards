@@ -32,9 +32,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const normalized = service.normalizeInput(parsed.data.text);
+  const inputSnapshot = service.buildInputSnapshot(parsed.data.text);
   try {
-    service.ensureInputLength(normalized);
+    service.ensureInputLength(inputSnapshot);
   } catch (error) {
     if (error instanceof InputLengthError) {
       return jsonResponse(400, { code: "invalid_request", message: error.message });
@@ -60,12 +60,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const pending = await service.insertPendingGeneration({
     user_id: userId,
-    input_hash: normalized.hash,
-    input_length: normalized.length,
+    input_hash: inputSnapshot.hash,
+    input_length: inputSnapshot.length,
   });
 
   try {
-    const providerResult = await service.runMockGenerationProvider(normalized);
+    const providerResult = await service.runMockGenerationProvider(inputSnapshot);
 
     if (providerResult.type === "low_quality") {
       await service.markGenerationFailed(pending.id, "low_quality_input", providerResult.message);

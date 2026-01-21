@@ -8,7 +8,7 @@ import type { DailyLimitDto, ProposalDto } from "../../types.ts";
 type GenerationRow = Tables<"generations">;
 type GenerationInsert = TablesInsert<"generations">;
 
-export interface NormalizedInput {
+export interface InputSnapshot {
   text: string;
   length: number;
   hash: string;
@@ -29,7 +29,7 @@ export class InputLengthError extends Error {
     public readonly min: number,
     public readonly max: number
   ) {
-    super(`Input length must be between ${min} and ${max} characters after normalization.`);
+    super(`Input length must be between ${min} and ${max} characters.`);
     this.name = "InputLengthError";
   }
 }
@@ -56,8 +56,6 @@ export const MIN_INPUT_LENGTH = 1000;
 export const MAX_INPUT_LENGTH = 20000;
 const DAILY_LIMIT_KEY = "daily_generation_limit";
 
-const normalizeWhitespace = (value: string): string => value.trim().replace(/\s+/g, " ");
-
 const hashInput = (value: string): string => createHash("sha256").update(value, "utf8").digest("hex");
 
 export class GenerationService {
@@ -66,12 +64,11 @@ export class GenerationService {
     private readonly now: () => Date = () => new Date()
   ) {}
 
-  normalizeInput(raw: string): NormalizedInput {
-    const text = normalizeWhitespace(raw);
-    return { text, length: text.length, hash: hashInput(text) };
+  buildInputSnapshot(raw: string): InputSnapshot {
+    return { text: raw, length: raw.length, hash: hashInput(raw) };
   }
 
-  ensureInputLength(input: NormalizedInput): void {
+  ensureInputLength(input: InputSnapshot): void {
     if (input.length < MIN_INPUT_LENGTH || input.length > MAX_INPUT_LENGTH) {
       throw new InputLengthError(input.length, MIN_INPUT_LENGTH, MAX_INPUT_LENGTH);
     }
@@ -196,7 +193,7 @@ export class GenerationService {
     }
   }
 
-  async runMockGenerationProvider(input: NormalizedInput): Promise<ProviderResult> {
+  async runMockGenerationProvider(input: InputSnapshot): Promise<ProviderResult> {
     if (input.length < MIN_INPUT_LENGTH + 200) {
       return {
         type: "low_quality",
@@ -206,12 +203,24 @@ export class GenerationService {
 
     const proposals: ProposalDto[] = [
       {
-        front: "What is the main idea of the provided text?",
-        back: "The text discusses a key concept and its implications in detail.",
+        front: "Czym jest inferencja typów w TypeScript?",
+        back: "Inferencja typów to automatyczne określanie typów zmiennych przez kompilator TypeScript na podstawie przypisanych wartości. Przykład: const x = 5; // x ma typ number bez jawnego określenia.",
       },
       {
-        front: "List two important details mentioned in the text.",
-        back: "It highlights a significant challenge and proposes a practical solution.",
+        front: "Czym różni się interface od type alias?",
+        back: "Interface służy głównie do opisywania kształtów obiektów i może być rozszerzany przez 'extends'. Type alias jest bardziej elastyczny - może reprezentować prymitywy, unie typów, funkcje i krzyżowe typy.",
+      },
+      {
+        front: "Co oznacza modyfikator 'readonly'?",
+        back: "Modyfikator 'readonly' uniemożliwia zmianę wartości właściwości po inicjalizacji obiektu. Przykład: interface User { readonly id: number; name: string; }. user.id = 2; // Błąd!",
+      },
+      {
+        front: "Czym są utility types w TypeScript?",
+        back: "Utility types to wbudowane typy pomocnicze jak Partial<T>, Required<T>, Pick<T,K>, Omit<T,K>, Record<K,T>. Umożliwiają transformację istniejących typów. Przykład: Partial<User> czyni wszystkie właściwości opcjonalnymi.",
+      },
+      {
+        front: "Co to jest discriminated union?",
+        back: "Discriminated union to wzorzec używający wspólnej dyskryminującej właściwości (literal type) do wąskiego typowania w union types. Przykład: type Shape = {kind: 'circle', r: number} | {kind: 'square', side: number}.",
       },
     ];
 

@@ -70,7 +70,7 @@ export async function mapApiError(response: Response): Promise<ApiErrorVm> {
         message:
           errorData.message ||
           "Z tego materiału nie da się wygenerować wartościowych fiszek. Spróbuj wkleić dłuższy lub bardziej merytoryczny fragment.",
-        canRetry: true,
+        canRetry: false,
       };
 
     case 500:
@@ -110,12 +110,36 @@ export async function mapApiError(response: Response): Promise<ApiErrorVm> {
 /**
  * Mapuje błąd sieci na ApiErrorVm
  */
-export function mapNetworkError(error: Error): ApiErrorVm {
+export function mapNetworkError(): ApiErrorVm {
   return {
     kind: "network",
     message: "Problem z połączeniem. Sprawdź połączenie internetowe i spróbuj ponownie.",
     canRetry: true,
   };
+}
+
+function mapTimeoutError(context: "generation" | "save"): ApiErrorVm {
+  const message =
+    context === "generation"
+      ? "Generowanie trwało zbyt długo i zostało przerwane. Spróbuj ponownie."
+      : "Zapisywanie trwało zbyt długo i zostało przerwane. Spróbuj ponownie.";
+
+  return {
+    kind: "network",
+    message,
+    canRetry: true,
+  };
+}
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**
@@ -124,13 +148,25 @@ export function mapNetworkError(error: Error): ApiErrorVm {
 export async function generateFlashcards(text: string): Promise<GenerationStartResponse> {
   const command: GenerationCreateCommand = { text: text.trim() };
 
-  const response = await fetch("/api/generations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(command),
-  });
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(
+      "/api/generations",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(command),
+      },
+      30000
+    );
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw mapTimeoutError("generation");
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     throw await mapApiError(response);
@@ -143,13 +179,25 @@ export async function generateFlashcards(text: string): Promise<GenerationStartR
  * Wywołuje POST /api/flashcards
  */
 export async function saveFlashcards(command: CreateFlashcardsCommand): Promise<CreateFlashcardsResponse> {
-  const response = await fetch("/api/flashcards", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(command),
-  });
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(
+      "/api/flashcards",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(command),
+      },
+      10000
+    );
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw mapTimeoutError("save");
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     // Obsługa 401 - redirect do logowania
