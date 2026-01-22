@@ -159,7 +159,7 @@ export async function generateFlashcards(text: string): Promise<GenerationStartR
         },
         body: JSON.stringify(command),
       },
-      30000
+      45000
     );
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {

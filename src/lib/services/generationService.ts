@@ -4,6 +4,19 @@ import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { Tables, TablesInsert } from "../../db/database.types.ts";
 import { nextUtcMidnight, utcStartOfDay } from "../dates.ts";
 import type { DailyLimitDto, ProposalDto } from "../../types.ts";
+import { OpenRouterService } from "../openrouter/openRouterService.ts";
+import {
+  OpenRouterConfigError,
+  OpenRouterTimeoutError,
+  OpenRouterUpstreamError,
+  OpenRouterInvalidOutputError,
+} from "../openrouter/openrouter.types.ts";
+import {
+  buildFlashcardsSystemMessage,
+  buildFlashcardsUserMessage,
+  flashcardsResponseFormat,
+  validateFlashcardsGenerationDTO,
+} from "../validation/openrouter.ts";
 
 type GenerationRow = Tables<"generations">;
 type GenerationInsert = TablesInsert<"generations">;
@@ -61,7 +74,8 @@ const hashInput = (value: string): string => createHash("sha256").update(value, 
 export class GenerationService {
   constructor(
     private readonly supabase: SupabaseClient,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    private readonly openRouterService?: OpenRouterService
   ) {}
 
   buildInputSnapshot(raw: string): InputSnapshot {
@@ -193,6 +207,95 @@ export class GenerationService {
     }
   }
 
+  /**
+   * Generates flashcard proposals using OpenRouter AI service.
+   * This is the production implementation.
+   */
+  async runGenerationProvider(input: InputSnapshot): Promise<ProviderResult> {
+    // Guard clause: require OpenRouterService
+    if (!this.openRouterService) {
+      throw new Error("OpenRouterService is not configured. Cannot generate proposals.");
+    }
+
+    try {
+      // Build messages for flashcard generation
+      const systemMessage = buildFlashcardsSystemMessage();
+      const userMessage = buildFlashcardsUserMessage(input.text);
+
+      // Call OpenRouter with structured completion
+      const result = await this.openRouterService.createStructuredCompletion({
+        messages: [systemMessage, userMessage],
+        responseFormat: flashcardsResponseFormat,
+        validate: (data: unknown) => {
+          const validation = validateFlashcardsGenerationDTO(data);
+          if (!validation.success) {
+            throw new Error(validation.error.errors[0]?.message ?? "Validation failed");
+          }
+          return validation.data;
+        },
+        params: {
+          temperature: 0.2,
+          top_p: 1,
+          max_tokens: 2000,
+        },
+      });
+
+      // Map to ProposalDto format
+      const proposals: ProposalDto[] = result.data.flashcards.map((card) => ({
+        front: card.front,
+        back: card.back,
+      }));
+
+      // Guard clause: ensure at least one proposal
+      if (proposals.length === 0) {
+        return {
+          type: "low_quality",
+          message: "AI model did not generate any flashcards from the provided text.",
+        };
+      }
+
+      return { type: "success", proposals };
+    } catch (error) {
+      // Handle OpenRouter-specific errors
+      if (error instanceof OpenRouterConfigError) {
+        throw new Error(`OpenRouter configuration error: ${error.message}`);
+      }
+
+      if (error instanceof OpenRouterTimeoutError) {
+        throw new Error(`OpenRouter timeout: ${error.message}`);
+      }
+
+      if (error instanceof OpenRouterUpstreamError) {
+        // Check for rate limiting
+        if (error.status === 429) {
+          throw new Error("OpenRouter rate limit exceeded. Please try again later.");
+        }
+
+        // Check for authentication errors
+        if (error.status === 401 || error.status === 403) {
+          throw new Error(`OpenRouter authentication error: ${error.message}`);
+        }
+
+        // Generic upstream error
+        throw new Error(`OpenRouter upstream error: ${error.message}`);
+      }
+
+      if (error instanceof OpenRouterInvalidOutputError) {
+        return {
+          type: "low_quality",
+          message: "AI model output did not meet quality standards. Please try with different input.",
+        };
+      }
+
+      // Re-throw unknown errors
+      throw error;
+    }
+  }
+
+  /**
+   * Mock generation provider for testing and development.
+   * Returns hardcoded flashcard proposals.
+   */
   async runMockGenerationProvider(input: InputSnapshot): Promise<ProviderResult> {
     if (input.length < MIN_INPUT_LENGTH + 200) {
       return {

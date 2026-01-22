@@ -117,15 +117,15 @@ src/pages/generate.astro
 ## Testowanie
 
 ### Checklist manualny (z planu implementacji)
-- [ ] Tekst 999 znaków → przycisk disabled + komunikat
+- [x] Tekst 999 znaków → przycisk disabled + komunikat
 - [ ] Tekst 1000 znaków → generowanie działa
-- [ ] Tekst 20001 znaków → disabled + komunikat
+- [x] Tekst 20001 znaków → disabled + komunikat
 - [ ] 403 na generowaniu → blokada + link do /account
-- [ ] 422 low quality → komunikat, brak przejścia do weryfikacji
-- [ ] Edycja: front > 200 / back > 500 → błędy inline
-- [ ] "Zapisz wszystkie" vs "Zapisz zatwierdzone" → poprawne payloady
+- [x] 422 low quality → komunikat, brak przejścia do weryfikacji
+- [x] Edycja: front > 200 / back > 500 → błędy inline
+- [x] "Zapisz wszystkie" vs "Zapisz zatwierdzone" → poprawne payloady
 - [ ] 401 na zapisie → redirect do login
-- [ ] Keyboard navigation (Tab, Ctrl+Enter, Escape)
+- [x] Keyboard navigation (Tab, Ctrl+Enter, Escape)
 - [ ] Screen reader - aria labels, live regions
 - [ ] Responsywność na mobile/tablet/desktop
 

@@ -3,6 +3,7 @@ import type { APIRoute } from "astro";
 import { DEFAULT_USER_ID, supabaseClient } from "../../db/supabase.client.ts";
 import { GenerationService, InputLengthError, DailyLimitExceededError } from "../../lib/services/generationService.ts";
 import { validateGenerationCreateCommand } from "../../lib/validation/generations.ts";
+import { OpenRouterService } from "../../lib/openrouter/openRouterService.ts";
 
 export const prerender = false;
 
@@ -14,7 +15,32 @@ const jsonResponse = (status: number, body: unknown): Response =>
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const supabase = (locals as { supabase?: typeof supabaseClient }).supabase ?? supabaseClient;
-  const service = new GenerationService(supabase);
+
+  // Initialize OpenRouter service if API key is available
+  let openRouterService: OpenRouterService | undefined;
+  const apiKey = import.meta.env.OPENROUTER_API_KEY;
+  const defaultModel = import.meta.env.OPENROUTER_DEFAULT_MODEL ?? "openai/gpt-4o-mini";
+
+  if (apiKey) {
+    try {
+      openRouterService = new OpenRouterService({
+        apiKey,
+        defaultModel,
+        timeoutMs: 30000,
+        appName: import.meta.env.PUBLIC_APP_NAME,
+        appUrl: import.meta.env.PUBLIC_APP_URL,
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to initialize OpenRouterService:", error);
+      return jsonResponse(500, {
+        code: "service_unavailable",
+        message: "AI service is not properly configured.",
+      });
+    }
+  }
+
+  const service = new GenerationService(supabase, undefined, openRouterService);
   const userId = DEFAULT_USER_ID;
 
   let payload: unknown;
@@ -65,7 +91,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   });
 
   try {
-    const providerResult = await service.runMockGenerationProvider(inputSnapshot);
+    // Use real provider if OpenRouter is configured, otherwise fallback to mock
+    const providerResult = openRouterService
+      ? await service.runGenerationProvider(inputSnapshot)
+      : await service.runMockGenerationProvider(inputSnapshot);
 
     if (providerResult.type === "low_quality") {
       await service.markGenerationFailed(pending.id, "low_quality_input", providerResult.message);

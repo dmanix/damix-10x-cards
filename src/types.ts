@@ -139,3 +139,72 @@ export interface AdminAppConfigResponse {
     value: AppConfigRow["value"] extends { daily_generation_limit: infer V } ? V : number;
   };
 }
+
+// OpenRouter AI Service
+export type ChatMessageRole = "system" | "user" | "assistant";
+
+export interface ChatMessage {
+  role: ChatMessageRole;
+  content: string;
+}
+
+export interface ModelParams {
+  temperature?: number;
+  top_p?: number;
+  max_tokens?: number;
+}
+
+export interface ResponseFormat {
+  type: "json_schema";
+  json_schema: {
+    name: string;
+    strict: boolean;
+    schema: Record<string, unknown>;
+  };
+}
+
+export interface ChatCompletionInput {
+  messages: ChatMessage[];
+  model?: string;
+  params?: ModelParams;
+}
+
+export interface StructuredCompletionInput<T = unknown> extends ChatCompletionInput {
+  responseFormat: ResponseFormat;
+  validate: (data: unknown) => T;
+}
+
+export interface UsageMetadata {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+}
+
+export interface ChatCompletionOutput {
+  text: string;
+  usage?: UsageMetadata;
+}
+
+export interface StructuredCompletionOutput<T> {
+  data: T;
+  rawText: string;
+  usage?: UsageMetadata;
+}
+
+export interface OpenRouterConfig {
+  apiKey: string;
+  baseUrl?: string;
+  defaultModel: string;
+  timeoutMs?: number;
+  appName?: string;
+  appUrl?: string;
+}
+
+// Flashcards generation through OpenRouter
+export interface FlashcardsGenerationDTO {
+  flashcards: {
+    front: string;
+    back: string;
+    tags?: string[];
+  }[];
+}
