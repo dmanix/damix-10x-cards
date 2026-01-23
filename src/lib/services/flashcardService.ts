@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { Tables, TablesInsert } from "../../db/database.types.ts";
-import type { FlashcardDto, FlashcardSource, UpdateFlashcardCommand, UpdateFlashcardResponse } from "../../types.ts";
+import type {
+  FlashcardDto,
+  FlashcardListQuery,
+  FlashcardListResponse,
+  FlashcardSource,
+  UpdateFlashcardCommand,
+  UpdateFlashcardResponse,
+} from "../../types.ts";
 
 type FlashcardRow = Tables<"flashcards">;
 type GenerationRow = Tables<"generations">;
@@ -110,6 +117,59 @@ export class FlashcardService {
     await this.applyAcceptCounts(userId, acceptCounts);
 
     return data.map((row) => toFlashcardDto(row as FlashcardRow));
+  }
+
+  async listFlashcards(userId: string, query: FlashcardListQuery): Promise<FlashcardListResponse> {
+    const { page = 1, pageSize = 20, sort = "createdAt", order = "desc", source, search, since } = query;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let request = this.supabase
+      .from("flashcards")
+      .select("id, front, back, source, generation_id, created_at, updated_at", { count: "exact" })
+      .eq("user_id", userId);
+
+    if (source) {
+      request = request.eq("source", source);
+    }
+
+    if (search) {
+      const trimmed = search.trim();
+      request = request.or(`front.ilike.%${trimmed}%,back.ilike.%${trimmed}%`);
+    }
+
+    if (since) {
+      request = request.gte("updated_at", since);
+    }
+
+    const orderColumn = sort === "updatedAt" ? "updated_at" : "created_at";
+    const { data, error, count } = await request.order(orderColumn, { ascending: order === "asc" }).range(from, to);
+
+    if (error) {
+      throw new Error(`Failed to list flashcards: ${error.message}`);
+    }
+
+    return {
+      items: (data ?? []).map((row) => toFlashcardDto(row as FlashcardRow)),
+      page,
+      pageSize,
+      total: count ?? 0,
+    };
+  }
+
+  async getFlashcardById(userId: string, id: string): Promise<FlashcardDto | null> {
+    const { data, error } = await this.supabase
+      .from("flashcards")
+      .select("id, front, back, source, generation_id, created_at, updated_at")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to fetch flashcard: ${error.message}`);
+    }
+
+    return data ? toFlashcardDto(data as FlashcardRow) : null;
   }
 
   private async applyAcceptCounts(userId: string, acceptCounts: GenerationAcceptCounts): Promise<void> {

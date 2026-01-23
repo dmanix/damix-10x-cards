@@ -84,3 +84,42 @@ export const updateFlashcardPayloadSchema = z
   .refine((value) => value.front ?? value.back, {
     message: "front or back must be provided",
   });
+
+const flashcardSortSchema = z.enum(["createdAt", "updatedAt"]);
+const flashcardOrderSchema = z.enum(["desc", "asc"]);
+const flashcardSourceSchema = z.enum(["ai", "ai-edited", "manual"]);
+
+export const flashcardListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  sort: flashcardSortSchema.default("createdAt"),
+  order: flashcardOrderSchema.default("desc"),
+  source: flashcardSourceSchema.optional(),
+  search: z.string().trim().min(1).max(200).optional(),
+  since: z.string().datetime({ offset: true }).or(z.string().datetime()).optional(),
+});
+
+export type FlashcardListQueryInput = z.infer<typeof flashcardListQuerySchema>;
+
+export const validateFlashcardListQuery = (
+  payload: unknown
+): z.SafeParseReturnType<FlashcardListQueryInput, FlashcardListQueryInput> => {
+  return flashcardListQuerySchema.safeParse(payload);
+};
+
+export const flashcardIdParamSchema = z.object({
+  id: z
+    .string({
+      required_error: "id is required",
+      invalid_type_error: "id must be a string",
+    })
+    .uuid("id must be a valid UUID"),
+});
+
+export type FlashcardIdParamInput = z.infer<typeof flashcardIdParamSchema>;
+
+export const validateFlashcardIdParam = (
+  payload: unknown
+): z.SafeParseReturnType<FlashcardIdParamInput, FlashcardIdParamInput> => {
+  return flashcardIdParamSchema.safeParse(payload);
+};

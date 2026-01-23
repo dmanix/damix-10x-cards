@@ -1,26 +1,60 @@
 import type { APIRoute } from "astro";
 
-import { z } from "zod";
-
 import { FlashcardNotFoundError, FlashcardService } from "../../../lib/services/flashcardService.ts";
 import { logger } from "../../../lib/logger.ts";
 import { DEFAULT_USER_ID, type SupabaseClient } from "../../../db/supabase.client.ts";
-import type { ErrorResponse, UpdateFlashcardCommand, UpdateFlashcardResponse } from "../../../types.ts";
-import { updateFlashcardPayloadSchema } from "../../../lib/validation/flashcards.ts";
+import type {
+  ErrorResponse,
+  FlashcardGetResponse,
+  UpdateFlashcardCommand,
+  UpdateFlashcardResponse,
+} from "../../../types.ts";
+import { updateFlashcardPayloadSchema, validateFlashcardIdParam } from "../../../lib/validation/flashcards.ts";
 
 export const prerender = false;
 
-const pathParamsSchema = z.object({
-  id: z.string().uuid(),
-});
-
-const jsonResponse = (body: ErrorResponse | UpdateFlashcardResponse, status: number) =>
+const jsonResponse = (body: ErrorResponse | UpdateFlashcardResponse | FlashcardGetResponse, status: number) =>
   new Response(JSON.stringify(body), {
     status,
     headers: {
       "Content-Type": "application/json",
     },
   });
+
+export const GET: APIRoute = async ({ params, locals }) => {
+  const supabase = (locals as { supabase?: SupabaseClient }).supabase;
+  if (!supabase) {
+    logger.error({ message: "Missing supabase client in locals while fetching flashcard" });
+    return jsonResponse({ code: "server_error", message: "internal server error" }, 500);
+  }
+
+  const parsedParams = validateFlashcardIdParam({ id: params.id });
+  if (!parsedParams.success) {
+    return jsonResponse(
+      { code: "invalid_request", message: parsedParams.error.errors[0]?.message ?? "Invalid request." },
+      400
+    );
+  }
+
+  const userId = DEFAULT_USER_ID;
+  const service = new FlashcardService(supabase);
+
+  try {
+    const flashcard = await service.getFlashcardById(userId, parsedParams.data.id);
+    if (!flashcard) {
+      return jsonResponse({ code: "not_found", message: "Flashcard not found." }, 404);
+    }
+    return jsonResponse(flashcard, 200);
+  } catch (error) {
+    logger.error({
+      event: "flashcards.detail.failed",
+      error: error instanceof Error ? { name: error.name, message: error.message } : { name: "UnknownError" },
+      userId,
+      id: parsedParams.data.id,
+    });
+    return jsonResponse({ code: "server_error", message: "Failed to fetch flashcard." }, 500);
+  }
+};
 
 export const PUT: APIRoute = async ({ request, params, locals }) => {
   const supabase = (locals as { supabase?: SupabaseClient }).supabase;
@@ -29,10 +63,10 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
     return jsonResponse({ code: "server_error", message: "internal server error" }, 500);
   }
 
-  const parsedParams = pathParamsSchema.safeParse(params);
+  const parsedParams = validateFlashcardIdParam({ id: params.id });
   if (!parsedParams.success) {
     logger.warn({ message: "Invalid path params for flashcard update", errors: parsedParams.error.errors });
-    return jsonResponse({ code: "invalid_params", message: "Flashcard id must be a valid UUID" }, 400);
+    return jsonResponse({ code: "invalid_request", message: "Flashcard id must be a valid UUID" }, 400);
   }
 
   let parsedBody;
