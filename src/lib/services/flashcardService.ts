@@ -285,6 +285,42 @@ export class FlashcardService {
     };
   }
 
+  async deleteFlashcard(userId: string, flashcardId: string): Promise<void> {
+    const { data: existing, error: selectError } = await this.supabase
+      .from<FlashcardRow>("flashcards")
+      .select("id, source, generation_id")
+      .eq("id", flashcardId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (selectError) {
+      throw new Error(`Failed to load flashcard: ${selectError.message}`);
+    }
+
+    if (!existing) {
+      throw new FlashcardNotFoundError(flashcardId);
+    }
+
+    const { data: deleted, error: deleteError } = await this.supabase
+      .from<FlashcardRow>("flashcards")
+      .delete()
+      .eq("id", flashcardId)
+      .eq("user_id", userId)
+      .select("id");
+
+    if (deleteError) {
+      throw new Error(`Failed to delete flashcard: ${deleteError.message}`);
+    }
+
+    if (!deleted || deleted.length === 0) {
+      throw new Error("Flashcard delete did not return a record.");
+    }
+
+    if (existing.generation_id && (existing.source === "ai" || existing.source === "ai-edited")) {
+      await this.decrementGenerationCounts(userId, existing.generation_id, existing.source as FlashcardSource);
+    }
+  }
+
   private resolveSource(current: FlashcardSource, hasChanges: boolean): FlashcardSource {
     if (current === "ai" && hasChanges) {
       return "ai-edited";
@@ -314,6 +350,49 @@ export class FlashcardService {
 
     const nextOriginal = Math.max((generation.accepted_original_count ?? 0) - 1, 0);
     const nextEdited = (generation.accepted_edited_count ?? 0) + 1;
+
+    const { error: updateError } = await this.supabase
+      .from("generations")
+      .update({
+        accepted_original_count: nextOriginal,
+        accepted_edited_count: nextEdited,
+      })
+      .eq("id", generationId)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      throw new Error(`Failed to update generation counts: ${updateError.message}`);
+    }
+  }
+
+  private async decrementGenerationCounts(
+    userId: string,
+    generationId: string,
+    source: FlashcardSource
+  ): Promise<void> {
+    const { data: generation, error: generationError } = await this.supabase
+      .from<GenerationRow>("generations")
+      .select("id, accepted_original_count, accepted_edited_count")
+      .eq("id", generationId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (generationError) {
+      throw new Error(`Failed to load generation counts: ${generationError.message}`);
+    }
+
+    if (!generation) {
+      throw new Error(`Generation ${generationId} not found for user.`);
+    }
+
+    const nextOriginal =
+      source === "ai"
+        ? Math.max((generation.accepted_original_count ?? 0) - 1, 0)
+        : (generation.accepted_original_count ?? 0);
+    const nextEdited =
+      source === "ai-edited"
+        ? Math.max((generation.accepted_edited_count ?? 0) - 1, 0)
+        : (generation.accepted_edited_count ?? 0);
 
     const { error: updateError } = await this.supabase
       .from("generations")
