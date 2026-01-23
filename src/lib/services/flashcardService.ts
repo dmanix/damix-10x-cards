@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { Tables, TablesInsert } from "../../db/database.types.ts";
-import type { FlashcardDto, FlashcardSource } from "../../types.ts";
+import type { FlashcardDto, FlashcardSource, UpdateFlashcardCommand, UpdateFlashcardResponse } from "../../types.ts";
 
 type FlashcardRow = Tables<"flashcards">;
 type GenerationRow = Tables<"generations">;
@@ -24,6 +24,13 @@ export class GenerationOwnershipError extends Error {
   constructor(public readonly missingIds: string[]) {
     super("Generation ownership mismatch.");
     this.name = "GenerationOwnershipError";
+  }
+}
+
+export class FlashcardNotFoundError extends Error {
+  constructor(flashcardId: string) {
+    super(`Flashcard ${flashcardId} not found or not owned by the user.`);
+    this.name = "FlashcardNotFoundError";
   }
 }
 
@@ -152,5 +159,113 @@ export class FlashcardService {
         }
       })
     );
+  }
+
+  async updateFlashcard(
+    userId: string,
+    flashcardId: string,
+    command: UpdateFlashcardCommand
+  ): Promise<UpdateFlashcardResponse> {
+    const { data: existing, error: selectError } = await this.supabase
+      .from<FlashcardRow>("flashcards")
+      .select("id, front, back, source, generation_id")
+      .eq("id", flashcardId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (selectError) {
+      throw new Error(`Failed to load flashcard: ${selectError.message}`);
+    }
+
+    if (!existing) {
+      throw new FlashcardNotFoundError(flashcardId);
+    }
+
+    const hasFrontChange = command.front !== undefined && command.front !== existing.front;
+    const hasBackChange = command.back !== undefined && command.back !== existing.back;
+
+    const targetSource = this.resolveSource(existing.source, hasFrontChange || hasBackChange);
+
+    const updatePayload: Partial<FlashcardRow> = {
+      source: targetSource,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (hasFrontChange) {
+      updatePayload.front = command.front;
+    }
+    if (hasBackChange) {
+      updatePayload.back = command.back;
+    }
+
+    const { data: updatedRow, error: updateError } = await this.supabase
+      .from<FlashcardRow>("flashcards")
+      .update(updatePayload)
+      .eq("id", flashcardId)
+      .eq("user_id", userId)
+      .select("id, source, updated_at")
+      .maybeSingle();
+
+    if (updateError) {
+      throw new Error(`Failed to update flashcard: ${updateError.message}`);
+    }
+
+    if (!updatedRow) {
+      throw new Error("Flashcard update did not return a record.");
+    }
+
+    if (this.requiresGenerationAdjustment(existing, targetSource) && existing.generation_id) {
+      await this.markGenerationEdited(userId, existing.generation_id);
+    }
+
+    return {
+      id: updatedRow.id,
+      source: updatedRow.source as FlashcardSource,
+      updatedAt: updatedRow.updated_at,
+    };
+  }
+
+  private resolveSource(current: FlashcardSource, hasChanges: boolean): FlashcardSource {
+    if (current === "ai" && hasChanges) {
+      return "ai-edited";
+    }
+    return current;
+  }
+
+  private requiresGenerationAdjustment(row: FlashcardRow, targetSource: FlashcardSource): boolean {
+    return row.source === "ai" && targetSource === "ai-edited" && Boolean(row.generation_id);
+  }
+
+  private async markGenerationEdited(userId: string, generationId: string): Promise<void> {
+    const { data: generation, error: generationError } = await this.supabase
+      .from<GenerationRow>("generations")
+      .select("id, accepted_original_count, accepted_edited_count")
+      .eq("id", generationId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (generationError) {
+      throw new Error(`Failed to load generation counts: ${generationError.message}`);
+    }
+
+    if (!generation) {
+      throw new Error(`Generation ${generationId} not found for user.`);
+    }
+
+    const nextOriginal = Math.max((generation.accepted_original_count ?? 0) - 1, 0);
+    const nextEdited = (generation.accepted_edited_count ?? 0) + 1;
+
+    const { error: updateError } = await this.supabase
+      .from("generations")
+      .update({
+        accepted_original_count: nextOriginal,
+        accepted_edited_count: nextEdited,
+      })
+      .eq("id", generationId)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      throw new Error(`Failed to update generation counts: ${updateError.message}`);
+    }
   }
 }

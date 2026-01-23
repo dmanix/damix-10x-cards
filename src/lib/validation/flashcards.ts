@@ -60,3 +60,27 @@ export const validateCreateFlashcardsCommand = (
 ): z.SafeParseReturnType<CreateFlashcardsInput, CreateFlashcardsCommand> => {
   return createFlashcardsSchema.safeParse(payload);
 };
+
+export const updateFlashcardPayloadSchema = z
+  .object({
+    front: z
+      .string({
+        invalid_type_error: "front must be a string",
+      })
+      .trim()
+      .min(1, "front must be at least 1 character")
+      .max(200, "front must be at most 200 characters")
+      .optional(),
+    back: z
+      .string({
+        invalid_type_error: "back must be a string",
+      })
+      .trim()
+      .min(1, "back must be at least 1 character")
+      .max(500, "back must be at most 500 characters")
+      .optional(),
+    source: z.union([z.literal("ai"), z.literal("ai-edited"), z.literal("manual")]),
+  })
+  .refine((value) => value.front ?? value.back, {
+    message: "front or back must be provided",
+  });
