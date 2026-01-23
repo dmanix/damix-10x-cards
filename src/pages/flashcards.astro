@@ -1,0 +1,14 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { FlashcardsView } from "../components/flashcards/FlashcardsView";
+
+// TODO: W przyszłości dodać sprawdzenie sesji użytkownika
+// const { data: { user }, error } = await Astro.locals.supabase.auth.getUser();
+// if (!user) {
+//   return Astro.redirect("/auth/login?returnTo=/flashcards");
+// }
+---
+
+<Layout title="Moja kolekcja - 10x Cards">
+  <FlashcardsView client:load />
+</Layout>
