@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { Tables, TablesInsert } from "../../db/database.types.ts";
 import { nextUtcMidnight, utcStartOfDay } from "../dates.ts";
-import type { DailyLimitDto, ProposalDto } from "../../types.ts";
+import type { DailyLimitDto, GenerationDto, GenerationListQuery, ProposalDto } from "../../types.ts";
 import { OpenRouterService } from "../openrouter/openRouterService.ts";
 import {
   OpenRouterConfigError,
@@ -17,6 +17,7 @@ import {
   flashcardsResponseFormat,
   validateFlashcardsGenerationDTO,
 } from "../validation/openrouter.ts";
+import { logger } from "../logger.ts";
 
 type GenerationRow = Tables<"generations">;
 type GenerationInsert = TablesInsert<"generations">;
@@ -172,6 +173,98 @@ export class GenerationService {
     return data;
   }
 
+  /**
+   * Returns a paginated list of generations for the authenticated user.
+   */
+  async listGenerations(
+    userId: string,
+    query: Required<Pick<GenerationListQuery, "page" | "pageSize" | "sort" | "order">> &
+      Pick<GenerationListQuery, "status">
+  ): Promise<{ items: GenerationDto[]; total: number; page: number; pageSize: number }> {
+    const { page, pageSize, sort, order, status } = query;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let queryBuilder = this.supabase
+      .from("generations")
+      .select(
+        "id, status, created_at, finished_at, generated_count, accepted_original_count, accepted_edited_count, error_code, error_message",
+        { count: "exact" }
+      );
+
+    if (status) {
+      queryBuilder = queryBuilder.eq("status", status);
+    }
+
+    const orderColumn = sort === "finishedAt" ? "finished_at" : "created_at";
+    queryBuilder = queryBuilder.order(orderColumn, {
+      ascending: order === "asc",
+      nullsFirst: sort === "finishedAt" ? false : undefined,
+    });
+
+    const { data, error, count } = await queryBuilder.range(from, to);
+    if (error) {
+      throw new Error(`Failed to fetch generations list for user ${userId}: ${error.message}`);
+    }
+
+    const items = (data ?? []).map((row) => ({
+      id: row.id,
+      status: row.status,
+      createdAt: row.created_at,
+      finishedAt: row.finished_at,
+      generatedCount: row.generated_count,
+      acceptedOriginalCount: row.accepted_original_count,
+      acceptedEditedCount: row.accepted_edited_count,
+      error: {
+        code: row.error_code,
+        message: row.error_message,
+      },
+    }));
+
+    return {
+      items,
+      page,
+      pageSize,
+      total: count ?? 0,
+    };
+  }
+
+  /**
+   * Returns details for a single generation owned by the user.
+   */
+  async getGenerationById(userId: string, id: GenerationRow["id"]): Promise<GenerationDto | null> {
+    const { data, error } = await this.supabase
+      .from("generations")
+      .select(
+        "id, status, created_at, finished_at, generated_count, accepted_original_count, accepted_edited_count, error_code, error_message"
+      )
+      .eq("id", id)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to fetch generation ${id} for user ${userId}: ${error.message}`);
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return {
+      id: data.id,
+      status: data.status,
+      createdAt: data.created_at,
+      finishedAt: data.finished_at,
+      generatedCount: data.generated_count,
+      acceptedOriginalCount: data.accepted_original_count,
+      acceptedEditedCount: data.accepted_edited_count,
+      error: {
+        code: data.error_code,
+        message: data.error_message,
+      },
+    };
+  }
+
   async markGenerationFailed(
     id: GenerationRow["id"],
     errorCode: GenerationRow["error_code"],
@@ -217,6 +310,12 @@ export class GenerationService {
       throw new Error("OpenRouterService is not configured. Cannot generate proposals.");
     }
 
+    const modelParams = {
+      temperature: 0.7,
+      top_p: 1,
+      max_tokens: 3000,
+    };
+
     try {
       // Build messages for flashcard generation
       const systemMessage = buildFlashcardsSystemMessage();
@@ -233,11 +332,7 @@ export class GenerationService {
           }
           return validation.data;
         },
-        params: {
-          temperature: 0.2,
-          top_p: 1,
-          max_tokens: 2000,
-        },
+        params: modelParams,
       });
 
       // Map to ProposalDto format
@@ -248,14 +343,36 @@ export class GenerationService {
 
       // Guard clause: ensure at least one proposal
       if (proposals.length === 0) {
+        logger.info({
+          event: "generation.openrouter.low_quality",
+          model: this.openRouterService.defaultModel,
+          params: modelParams,
+          inputLength: input.length,
+          generatedCount: proposals.length,
+        });
         return {
           type: "low_quality",
           message: "AI model did not generate any flashcards from the provided text.",
         };
       }
 
+      logger.info({
+        event: "generation.openrouter.success",
+        model: this.openRouterService.defaultModel,
+        params: modelParams,
+        inputLength: input.length,
+        generatedCount: proposals.length,
+      });
+
       return { type: "success", proposals };
     } catch (error) {
+      logger.error({
+        event: "generation.openrouter.error",
+        model: this.openRouterService.defaultModel,
+        params: modelParams,
+        inputLength: input.length,
+        error: error instanceof Error ? { name: error.name, message: error.message } : { name: "UnknownError" },
+      });
       // Handle OpenRouter-specific errors
       if (error instanceof OpenRouterConfigError) {
         throw new Error(`OpenRouter configuration error: ${error.message}`);

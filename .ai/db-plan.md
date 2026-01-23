@@ -75,7 +75,7 @@ Tabela klucz-wartość na globalne ustawienia aplikacji (np. dzienny limit gener
 - `daily_generation_limit`: `{"value": 10}` (lub inna liczba)
 
 **Bezpieczeństwo:**
-- Tabela **nie powinna być dostępna publicznie** (brak polityk RLS dla użytkowników; dostęp tylko z backendu/service role).
+- Tabela dostępna do odczytu dla wszystkich użytkowników (RLS z polityką SELECT dla `anon` i `authenticated`).
 
 ---
 
@@ -154,8 +154,8 @@ Nie występują relacje wiele-do-wielu w MVP (brak tabel łączących).
 
 - **RLS**: `ENABLE ROW LEVEL SECURITY`
 - **Polityki**:
-  - **Brak polityk** dla `anon` i `authenticated` (domyślnie brak dostępu).
-  - Dostęp do odczytu/zapisu wyłącznie z backendu przy użyciu **service role** (w Supabase service role omija RLS).
+  - **SELECT** dla `anon` i `authenticated` (odczyt dozwolony dla wszystkich).
+  - **INSERT/UPDATE/DELETE** tylko dla backendu (np. role admin/service role).
 
 ---
 

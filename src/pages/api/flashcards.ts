@@ -5,6 +5,7 @@ import { DEFAULT_USER_ID } from "../../db/supabase.client.ts";
 import type { CreateFlashcardsResponse } from "../../types.ts";
 import { FlashcardService, GenerationOwnershipError } from "../../lib/services/flashcardService.ts";
 import { validateCreateFlashcardsCommand } from "../../lib/validation/flashcards.ts";
+import { logger } from "../../lib/logger.ts";
 
 export const prerender = false;
 
@@ -65,8 +66,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // eslint-disable-next-line no-console
-    console.error("flashcards.validateGenerationOwnership.failed", {
+    logger.error({
+      event: "flashcards.validateGenerationOwnership.failed",
       error: error instanceof Error ? error.message : "Unknown error",
       generationCount: generationIds.length,
     });
@@ -85,8 +86,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // eslint-disable-next-line no-console
-    console.error("flashcards.create.failed", {
+    logger.error({
+      event: "flashcards.create.failed",
       error: error instanceof Error ? error.message : "Unknown error",
       generationCount: generationIds.length,
       createdCount: normalizedFlashcards.length,

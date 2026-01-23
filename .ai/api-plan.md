@@ -56,15 +56,9 @@
   - Response: `204 No Content`
   - Errors: `404` not found.
 
-### 2.6 Admin
-- **GET** `/admin/app-config`
-  - Description: Read global config.
-  - Response: `200 OK { "daily_generation_limit": { "value": number }, ... }`
-
-
 ## 3. Authentication and Authorization
 - Supabase Auth JWT bearer in `Authorization: Bearer <access_token>`.
-- RLS enforces owner-only access on `flashcards` and `generations`; admin routes require service role key (bypasses RLS).
+- RLS enforces owner-only access on `flashcards` and `generations`;
 - All non-auth endpoints require authenticated user.
 - Rate limiting: apply per-IP and per-user on auth and generation endpoints; stricter on `/generations`.
 
@@ -85,5 +79,5 @@
 - Rate-limit high-cost endpoints (`/generations`, auth).
 - Input normalization + hashing for duplicate detection and diagnostics (`input_hash`).
 - Log generation failures with `error_code`/`error_message`; avoid storing raw input text.
-- Service role isolation for `/admin/*`; never expose `app_config` to authenticated users directly.
+- `app_config` dostępne do odczytu dla wszystkich użytkowników.
 

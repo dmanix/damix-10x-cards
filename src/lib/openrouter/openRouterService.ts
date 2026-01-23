@@ -16,6 +16,7 @@ import {
   OpenRouterInvalidOutputError,
   type OpenRouterResponse,
 } from "./openrouter.types";
+import { logger } from "../logger.ts";
 
 /**
  * OpenRouterService provides a clean abstraction for interacting with OpenRouter API.
@@ -71,12 +72,35 @@ export class OpenRouterService {
       }),
     };
 
-    const response = await this.requestJson<OpenRouterResponse>("/chat/completions", payload);
+    const inputLength = this.calculateInputLength(input.messages);
+    const startTime = Date.now();
 
-    const text = this.extractAssistantContent(response);
-    const usage = response.usage ? this.mapUsage(response.usage) : undefined;
+    try {
+      const { data: response, status } = await this.requestJson<OpenRouterResponse>("/chat/completions", payload);
 
-    return { text, usage };
+      const text = this.extractAssistantContent(response);
+      const usage = response.usage ? this.mapUsage(response.usage) : undefined;
+
+      this.logEvent("info", "openrouter.chat.success", {
+        model,
+        params: input.params,
+        inputLength,
+        durationMs: Date.now() - startTime,
+        status,
+        usage,
+      });
+
+      return { text, usage };
+    } catch (error) {
+      this.logEvent("error", "openrouter.chat.error", {
+        model,
+        params: input.params,
+        inputLength,
+        durationMs: Date.now() - startTime,
+        error: this.formatErrorForLog(error),
+      });
+      throw error;
+    }
   }
 
   /**
@@ -109,7 +133,26 @@ export class OpenRouterService {
       }),
     };
 
-    const response = await this.requestJson<OpenRouterResponse>("/chat/completions", payload);
+    const inputLength = this.calculateInputLength(input.messages);
+    const startTime = Date.now();
+
+    let response: OpenRouterResponse;
+    let status: number;
+
+    try {
+      const requestResult = await this.requestJson<OpenRouterResponse>("/chat/completions", payload);
+      response = requestResult.data;
+      status = requestResult.status;
+    } catch (error) {
+      this.logEvent("error", "openrouter.structured.error", {
+        model,
+        params: input.params,
+        inputLength,
+        durationMs: Date.now() - startTime,
+        error: this.formatErrorForLog(error),
+      });
+      throw error;
+    }
 
     const rawText = this.extractAssistantContent(response);
     const usage = response.usage ? this.mapUsage(response.usage) : undefined;
@@ -131,6 +174,15 @@ export class OpenRouterService {
     } catch (error) {
       throw new OpenRouterInvalidOutputError("Model output failed validation.", error);
     }
+
+    this.logEvent("info", "openrouter.structured.success", {
+      model,
+      params: input.params,
+      inputLength,
+      durationMs: Date.now() - startTime,
+      status,
+      usage,
+    });
 
     return { data, rawText, usage };
   }
@@ -176,7 +228,7 @@ export class OpenRouterService {
     return headers;
   }
 
-  private async requestJson<T>(path: string, body: unknown): Promise<T> {
+  private async requestJson<T>(path: string, body: unknown): Promise<{ data: T; status: number }> {
     const url = `${this.baseUrl}${path}`;
     const controller = new AbortController();
 
@@ -200,7 +252,7 @@ export class OpenRouterService {
       }
 
       const data = await response.json();
-      return data as T;
+      return { data: data as T, status: response.status };
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -269,6 +321,33 @@ export class OpenRouterService {
       completion_tokens: usage.completion_tokens,
       total_tokens: usage.total_tokens,
     };
+  }
+
+  private calculateInputLength(messages: ChatMessage[]): number {
+    return messages.reduce((total, message) => total + message.content.length, 0);
+  }
+
+  private formatErrorForLog(error: unknown): { name: string; message: string } {
+    if (error instanceof Error) {
+      return { name: error.name, message: error.message };
+    }
+
+    return { name: "UnknownError", message: "Unknown error" };
+  }
+
+  private logEvent(level: "info" | "error", event: string, details: Record<string, unknown>): void {
+    const payload = {
+      event,
+      service: "OpenRouter",
+      ...details,
+    };
+
+    if (level === "info") {
+      logger.info(payload);
+      return;
+    }
+
+    logger.error(payload);
   }
 
   /**
