@@ -1,0 +1,9 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { DashboardView } from "../components/dashboard/DashboardView";
+// TODO: Add session guard here in the future
+---
+
+<Layout title="Dashboard | 10x Cards">
+  <DashboardView client:load />
+</Layout>

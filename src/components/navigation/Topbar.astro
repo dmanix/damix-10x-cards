@@ -1,0 +1,47 @@
+---
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+const links = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/generate", label: "Generuj" },
+  { href: "/flashcards", label: "Kolekcja" },
+  { href: "/study", label: "Nauka" },
+  { href: "/account", label: "Konto" },
+];
+---
+
+<header class="border-b bg-background">
+  <div class="container mx-auto flex h-16 items-center justify-between px-4">
+    <div class="flex items-center gap-6">
+      <a href="/dashboard" class="text-lg font-semibold tracking-tight"> 10x Cards </a>
+      <nav class="hidden md:flex items-center gap-4">
+        {
+          links.map((link) => {
+            const isActive =
+              currentPath === link.href || (link.href !== "/dashboard" && currentPath.startsWith(link.href));
+            return (
+              <a
+                href={link.href}
+                class:list={[
+                  "text-sm font-medium transition-colors hover:text-primary",
+                  isActive ? "text-primary" : "text-muted-foreground",
+                ]}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {link.label}
+              </a>
+            );
+          })
+        }
+      </nav>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-muted-foreground">Użytkownik</span>
+    </div>
+  </div>
+</header>
