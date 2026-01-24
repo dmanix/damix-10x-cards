@@ -7,6 +7,7 @@ import { useFlashcardsCollection } from "@/components/hooks/useFlashcardsCollect
 import type { FlashcardsApiErrorVm, FlashcardsQueryVm } from "./types";
 import { CreateManualFlashcardDialog } from "./CreateManualFlashcardDialog";
 import { DeleteFlashcardDialog } from "./DeleteFlashcardDialog";
+import { EditFlashcardDialog } from "./EditFlashcardDialog";
 
 export function FlashcardsView() {
   const {
@@ -73,15 +74,6 @@ export function FlashcardsView() {
     [setDeleteTargetId]
   );
 
-  const handleCancelEdit = useCallback(
-    (id: string) => {
-      if (editingId === id) {
-        setEditingId(null);
-      }
-    },
-    [editingId, setEditingId]
-  );
-
   const handleSaveEdit = useCallback(
     async (id: string, values: { front: string; back: string }) => {
       const item = listState.data?.items.find((card) => card.id === id);
@@ -91,6 +83,9 @@ export function FlashcardsView() {
 
       try {
         await updateItem(id, { ...values, source: item.source });
+        setEditingId(null);
+        refetch();
+        setStatusMessage("Zapisano zmiany.");
       } catch (error) {
         const apiError = error as FlashcardsApiErrorVm;
         if (apiError?.kind === "not_found") {
@@ -104,15 +99,21 @@ export function FlashcardsView() {
     [listState.data?.items, refetch, setEditingId, updateItem]
   );
 
-  const handleCloseAfterSave = useCallback(
-    (id: string) => {
-      if (editingId === id) {
+  const handleCloseEditDialog = useCallback(
+    (open: boolean) => {
+      if (!open) {
         setEditingId(null);
-        refetch();
       }
     },
-    [editingId, refetch, setEditingId]
+    [setEditingId]
   );
+
+  const editingTarget = useMemo(() => {
+    if (!editingId) {
+      return null;
+    }
+    return listState.data?.items.find((item) => item.id === editingId) ?? null;
+  }, [editingId, listState.data?.items]);
 
   const deleteTarget = useMemo(() => {
     if (!deleteTargetId) {
@@ -194,13 +195,9 @@ export function FlashcardsView() {
           editingId={editingId}
           onRetry={refetch}
           onStartEdit={handleStartEdit}
-          onCancelEdit={handleCancelEdit}
-          onSaveEdit={handleSaveEdit}
-          onCloseAfterSave={handleCloseAfterSave}
           onRequestDelete={handleRequestDelete}
           onResetFilters={handleResetFilters}
           onOpenCreate={handleOpenCreate}
-          isUpdatingById={isUpdatingById}
         />
       </section>
 
@@ -229,6 +226,14 @@ export function FlashcardsView() {
         onOpenChange={handleCloseDeleteDialog}
         onConfirm={handleConfirmDelete}
         isPending={deleteTargetId ? Boolean(isDeletingById[deleteTargetId]) : false}
+      />
+
+      <EditFlashcardDialog
+        open={Boolean(editingId)}
+        item={editingTarget}
+        onOpenChange={handleCloseEditDialog}
+        onSave={handleSaveEdit}
+        isSaving={editingId ? Boolean(isUpdatingById[editingId]) : false}
       />
 
       <div aria-live="polite" className="sr-only">

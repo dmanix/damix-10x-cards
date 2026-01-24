@@ -9,19 +9,12 @@ interface FlashcardInlineEditorProps {
   isSaving?: boolean;
   onSave: (values: { front: string; back: string }) => Promise<void>;
   onCancel: () => void;
-  onCloseAfterSave?: () => void;
 }
 
 const FRONT_LIMIT = 200;
 const BACK_LIMIT = 500;
 
-export function FlashcardInlineEditor({
-  initial,
-  isSaving = false,
-  onSave,
-  onCancel,
-  onCloseAfterSave,
-}: FlashcardInlineEditorProps) {
+export function FlashcardInlineEditor({ initial, isSaving = false, onSave, onCancel }: FlashcardInlineEditorProps) {
   const frontId = useId();
   const backId = useId();
   const [front, setFront] = useState(initial.front);
@@ -29,7 +22,6 @@ export function FlashcardInlineEditor({
   const [frontError, setFrontError] = useState<string | null>(null);
   const [backError, setBackError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setFront(initial.front);
@@ -37,7 +29,6 @@ export function FlashcardInlineEditor({
     setFrontError(null);
     setBackError(null);
     setFormError(null);
-    setSuccessMessage(null);
   }, [initial.back, initial.front]);
 
   const trimmedFront = front.trim();
@@ -56,12 +47,6 @@ export function FlashcardInlineEditor({
       setBackError(null);
     }
   }, [back.length, front.length]);
-
-  useEffect(() => {
-    if (successMessage) {
-      setSuccessMessage(null);
-    }
-  }, [back, front, successMessage]);
 
   const isDirty = useMemo(
     () => trimmedFront !== initial.front.trim() || trimmedBack !== initial.back.trim(),
@@ -111,12 +96,13 @@ export function FlashcardInlineEditor({
 
     try {
       await onSave({ front: trimmedFront, back: trimmedBack });
-      setSuccessMessage("Zapisano zmiany.");
     } catch (error) {
       const message = (error as { message?: string })?.message ?? "Nie udało się zapisać zmian.";
       setFormError(message);
     }
   };
+
+  const isLocked = isSaving;
 
   return (
     <div className="space-y-4">
@@ -133,10 +119,10 @@ export function FlashcardInlineEditor({
           value={front}
           onChange={(event) => setFront(event.target.value)}
           rows={3}
-          className="max-h-40 break-words whitespace-pre-wrap [overflow-wrap:anywhere] [field-sizing:fixed] overflow-y-auto"
+          className="max-h-40 break-all whitespace-pre-wrap [overflow-wrap:anywhere] [field-sizing:fixed] overflow-y-auto"
           aria-describedby={frontError ? `${frontId}-error` : undefined}
           aria-invalid={Boolean(frontError)}
-          disabled={isSaving}
+          disabled={isLocked}
         />
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{frontError ? <span id={`${frontId}-error`}>{frontError}</span> : " "}</span>
@@ -155,10 +141,10 @@ export function FlashcardInlineEditor({
           value={back}
           onChange={(event) => setBack(event.target.value)}
           rows={4}
-          className="max-h-48 break-words whitespace-pre-wrap [overflow-wrap:anywhere] [field-sizing:fixed] overflow-y-auto"
+          className="max-h-48 break-all whitespace-pre-wrap [overflow-wrap:anywhere] [field-sizing:fixed] overflow-y-auto"
           aria-describedby={backError ? `${backId}-error` : undefined}
           aria-invalid={Boolean(backError)}
-          disabled={isSaving}
+          disabled={isLocked}
         />
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{backError ? <span id={`${backId}-error`}>{backError}</span> : " "}</span>
@@ -173,21 +159,10 @@ export function FlashcardInlineEditor({
           {formError}
         </p>
       ) : null}
-      {successMessage ? (
-        <p className="text-sm text-emerald-600" role="status">
-          {successMessage}
-        </p>
-      ) : null}
-
       <div className="flex flex-wrap gap-2">
         <Button type="button" onClick={handleSave} disabled={!isDirty || !isValid || isSaving}>
           {isSaving ? "Zapisywanie..." : "Zapisz"}
         </Button>
-        {successMessage && onCloseAfterSave ? (
-          <Button type="button" variant="outline" onClick={onCloseAfterSave}>
-            Zamknij
-          </Button>
-        ) : null}
         <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>
           Anuluj
         </Button>

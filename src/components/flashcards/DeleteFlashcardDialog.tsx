@@ -52,17 +52,17 @@ export function DeleteFlashcardDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent overlayProps={{ onClick: () => onOpenChange(false) }}>
         <AlertDialogHeader>
           <AlertDialogTitle>Usuń fiszkę</AlertDialogTitle>
           <AlertDialogDescription>Tej akcji nie można cofnąć. Fiszka zostanie trwale usunięta.</AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-2 rounded-sm border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-          <p className="line-clamp-2">
+          <p className="line-clamp-2 break-all [overflow-wrap:anywhere]">
             <span className="font-medium text-foreground">Przód:</span> {item.front}
           </p>
-          <p className="line-clamp-2">
+          <p className="line-clamp-2 break-all [overflow-wrap:anywhere]">
             <span className="font-medium text-foreground">Tył:</span> {item.back}
           </p>
         </div>

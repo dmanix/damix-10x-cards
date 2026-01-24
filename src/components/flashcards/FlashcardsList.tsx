@@ -9,13 +9,9 @@ interface FlashcardsListProps {
   editingId: string | null;
   onRetry: () => void;
   onStartEdit: (id: string) => void;
-  onCancelEdit: (id: string) => void;
-  onSaveEdit: (id: string, values: { front: string; back: string }) => Promise<void>;
-  onCloseAfterSave: (id: string) => void;
   onRequestDelete: (id: string) => void;
   onResetFilters: () => void;
   onOpenCreate?: () => void;
-  isUpdatingById?: Record<string, boolean>;
 }
 
 export function FlashcardsList({
@@ -23,13 +19,9 @@ export function FlashcardsList({
   editingId,
   onRetry,
   onStartEdit,
-  onCancelEdit,
-  onSaveEdit,
-  onCloseAfterSave,
   onRequestDelete,
   onResetFilters,
   onOpenCreate,
-  isUpdatingById,
 }: FlashcardsListProps) {
   if (state.status === "loading") {
     return (
@@ -122,12 +114,8 @@ export function FlashcardsList({
           <li key={item.id}>
             <FlashcardCard
               item={item}
-              mode={editingId === item.id ? "edit" : "view"}
-              isSaving={Boolean(isUpdatingById?.[item.id])}
+              isEditing={editingId === item.id}
               onStartEdit={onStartEdit}
-              onCancelEdit={onCancelEdit}
-              onSaveEdit={onSaveEdit}
-              onCloseAfterSave={onCloseAfterSave}
               onRequestDelete={onRequestDelete}
             />
           </li>

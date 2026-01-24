@@ -11,11 +11,12 @@
 - Dodano dialogi: `CreateManualFlashcardDialog`, `DeleteFlashcardDialog`.
 - Dodano paginacje `FlashcardsPagination` z rozmiarem strony 10/20/50/100.
 - Wprowadzono poprawki UX: walidacje inline, blokady przyciskow, ograniczenie wysokosci textarea, wyrównanie toolbara.
+- Dodano modal edycji fiszki i przeniesiono edycje do okna dialogowego.
+- Poprawiono zachowanie zapisu edycji: zamyka modal po sukcesie, odswieza liste, komunikat w aria-live.
+- Dodano lączenie dlugich slow w textarea, kartach listy i dialogu usuwania.
 
 ## Kolejne kroki
-- Naprawić istniejące błędy UX:
-  1) Textarea przy tworzeniu fiszki nadal nie łamie długich słów i to powoduje rozjechanie UI
-  2) Teraz po edycji fiszki, już nie znika okienko do edycji, ale nadal nie widać komunikatu, że się udało i dodatkowo przycisk Zapisz jest nadal aktywny. W komunikacie powinien być dodatkowo przycisk "Zamknij i przeładuj listę", który przeładuje listę fiszek.
-- Zweryfikowac backend DELETE /api/flashcards/{id} i zachowanie PUT z `source`.
-- Dopracowac aria-live i komunikaty statusowe po mutacjach.
-- Dodac ewentualne testy manualne zgodnie z planem (empty states, filtry, sort, paginacja, 401).
+- Sprawdzic w UI dlugie teksty (karty listy, modal usuwania, textarea).
+- Smoke test edycji: zapisz/anuluj -> modal znika, lista sie odswieza.
+
+

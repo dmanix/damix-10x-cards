@@ -121,7 +121,7 @@ export function CreateManualFlashcardDialog({
               value={front}
               onChange={(event) => setFront(event.target.value)}
               rows={3}
-              className="max-h-40 break-words whitespace-pre-wrap [overflow-wrap:anywhere] [field-sizing:fixed] overflow-y-auto"
+              className="max-h-40 break-all whitespace-pre-wrap [overflow-wrap:anywhere] [field-sizing:fixed] overflow-y-auto"
               aria-describedby={frontError ? `${frontId}-error` : undefined}
               aria-invalid={Boolean(frontError)}
               disabled={isSubmitting}
@@ -143,7 +143,7 @@ export function CreateManualFlashcardDialog({
               value={back}
               onChange={(event) => setBack(event.target.value)}
               rows={4}
-              className="max-h-48 break-words whitespace-pre-wrap [overflow-wrap:anywhere] [field-sizing:fixed] overflow-y-auto"
+              className="max-h-48 break-all whitespace-pre-wrap [overflow-wrap:anywhere] [field-sizing:fixed] overflow-y-auto"
               aria-describedby={backError ? `${backId}-error` : undefined}
               aria-invalid={Boolean(backError)}
               disabled={isSubmitting}
