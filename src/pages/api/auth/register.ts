@@ -1,0 +1,108 @@
+import type { APIRoute } from "astro";
+import { z } from "zod";
+
+import { createSupabaseServerInstance } from "../../../db/supabase.client.ts";
+import { sanitizeReturnTo } from "../../../lib/auth/returnTo.ts";
+
+export const prerender = false;
+
+const registerInputSchema = z
+  .object({
+    email: z.string().trim().min(1, "Podaj adres email.").email("Podaj poprawny adres email."),
+    password: z.string().min(8, "Hasło powinno mieć co najmniej 8 znaków."),
+    passwordConfirm: z.string().min(1, "Powtórz hasło."),
+    returnTo: z.string().optional().nullable(),
+  })
+  .refine((values) => values.password === values.passwordConfirm, {
+    message: "Hasła muszą być identyczne.",
+    path: ["passwordConfirm"],
+  });
+
+async function getRequestInput(request: Request, contentType: string): Promise<unknown> {
+  if (contentType.includes("application/json")) return request.json();
+
+  const formData = await request.formData();
+  return {
+    email: formData.get("email"),
+    password: formData.get("password"),
+    passwordConfirm: formData.get("passwordConfirm"),
+    returnTo: formData.get("returnTo"),
+  };
+}
+
+function json(status: number, data: unknown): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+    },
+  });
+}
+
+function isUserAlreadyRegistered(error: { message?: string | null } | null): boolean {
+  if (!error?.message) return false;
+  const normalized = error.message.toLowerCase();
+  return normalized.includes("already registered") || normalized.includes("already exists");
+}
+
+export const POST: APIRoute = async ({ request, cookies }) => {
+  const contentType = request.headers.get("content-type") ?? "";
+  const accept = request.headers.get("accept") ?? "";
+  const isHtmlFormPost =
+    accept.includes("text/html") &&
+    (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data"));
+
+  const input = await getRequestInput(request, contentType);
+  const parsed = registerInputSchema.safeParse(input);
+
+  if (!parsed.success) {
+    if (isHtmlFormPost) {
+      const redirectUrl = new URL("/auth/register", request.url);
+      redirectUrl.searchParams.set("error", "invalid_input");
+      return new Response(null, {
+        status: 303,
+        headers: { Location: `${redirectUrl.pathname}${redirectUrl.search}` },
+      });
+    }
+
+    return json(400, {
+      error: "Nieprawidłowe dane wejściowe.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    });
+  }
+
+  const supabase = createSupabaseServerInstance({ cookies, headers: request.headers });
+  const sanitizedReturnTo = sanitizeReturnTo(parsed.data.returnTo) ?? null;
+  const { error } = await supabase.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    const isDuplicate = isUserAlreadyRegistered(error);
+    if (isHtmlFormPost) {
+      const redirectUrl = new URL("/auth/register", request.url);
+      redirectUrl.searchParams.set("error", isDuplicate ? "user_exists" : "register_failed");
+      if (sanitizedReturnTo) redirectUrl.searchParams.set("returnTo", sanitizedReturnTo);
+      return new Response(null, {
+        status: 303,
+        headers: { Location: `${redirectUrl.pathname}${redirectUrl.search}` },
+      });
+    }
+
+    return json(400, {
+      error: isDuplicate ? "Użytkownik o takim adresie email już istnieje." : "Nie udało się utworzyć konta.",
+    });
+  }
+
+  const redirectTo = sanitizedReturnTo ?? "/dashboard";
+
+  if (isHtmlFormPost) {
+    return new Response(null, {
+      status: 303,
+      headers: { Location: redirectTo },
+    });
+  }
+
+  return json(200, { redirectTo });
+};

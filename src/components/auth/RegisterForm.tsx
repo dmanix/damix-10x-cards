@@ -19,9 +19,22 @@ const registerSchema = z
 
 interface RegisterFormProps {
   returnTo?: string | null;
+  initialError?: string | null;
 }
 
-export function RegisterForm({ returnTo }: RegisterFormProps) {
+function mapInitialError(initialError?: string | null): string | null {
+  if (!initialError) return null;
+  if (initialError === "invalid_input") return "Sprawdź poprawność danych w formularzu.";
+  if (initialError === "user_exists") return "Użytkownik o takim adresie email już istnieje.";
+  if (initialError === "register_failed") return "Nie udało się utworzyć konta.";
+  return "Nie udało się utworzyć konta. Spróbuj ponownie.";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+export function RegisterForm({ returnTo, initialError }: RegisterFormProps) {
   const emailId = useId();
   const passwordId = useId();
   const confirmId = useId();
@@ -31,9 +44,13 @@ export function RegisterForm({ returnTo }: RegisterFormProps) {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(() => mapInitialError(initialError));
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
     setFormError(null);
     setEmailError(null);
     setPasswordError(null);
@@ -46,11 +63,47 @@ export function RegisterForm({ returnTo }: RegisterFormProps) {
     });
 
     if (!result.success) {
-      event.preventDefault();
       const fieldErrors = result.error.flatten().fieldErrors;
       setEmailError(fieldErrors.email?.[0] ?? null);
       setPasswordError(fieldErrors.password?.[0] ?? null);
       setConfirmError(fieldErrors.passwordConfirm?.[0] ?? null);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          email: result.data.email,
+          password: result.data.password,
+          passwordConfirm: result.data.passwordConfirm,
+          returnTo,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as unknown;
+
+      if (!response.ok) {
+        const message =
+          isRecord(payload) && typeof payload.error === "string"
+            ? payload.error
+            : "Nie udało się utworzyć konta.";
+        setFormError(message);
+        return;
+      }
+
+      const redirectTo =
+        isRecord(payload) && typeof payload.redirectTo === "string" ? payload.redirectTo : "/dashboard";
+      window.location.assign(redirectTo);
+    } catch {
+      setFormError("Nie udało się utworzyć konta.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -74,6 +127,7 @@ export function RegisterForm({ returnTo }: RegisterFormProps) {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              disabled={isSubmitting}
               aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? `${emailId}-error` : undefined}
             />
@@ -92,6 +146,7 @@ export function RegisterForm({ returnTo }: RegisterFormProps) {
               autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              disabled={isSubmitting}
               aria-invalid={Boolean(passwordError)}
               aria-describedby={passwordError ? `${passwordId}-error` : undefined}
             />
@@ -110,6 +165,7 @@ export function RegisterForm({ returnTo }: RegisterFormProps) {
               autoComplete="new-password"
               value={passwordConfirm}
               onChange={(event) => setPasswordConfirm(event.target.value)}
+              disabled={isSubmitting}
               aria-invalid={Boolean(confirmError)}
               aria-describedby={confirmError ? `${confirmId}-error` : undefined}
             />
@@ -122,8 +178,8 @@ export function RegisterForm({ returnTo }: RegisterFormProps) {
               {formError}
             </p>
           ) : null}
-          <Button type="submit" className="w-full">
-            Zarejestruj się
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Rejestracja..." : "Zarejestruj się"}
           </Button>
         </form>
       </CardContent>
