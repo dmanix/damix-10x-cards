@@ -13,18 +13,33 @@ const loginSchema = z.object({
 
 interface LoginFormProps {
   returnTo?: string | null;
+  initialError?: string | null;
 }
 
-export function LoginForm({ returnTo }: LoginFormProps) {
+function mapInitialError(initialError?: string | null): string | null {
+  if (!initialError) return null;
+  if (initialError === "invalid_credentials") return "Nieprawidłowy email lub hasło.";
+  if (initialError === "invalid_input") return "Sprawdź poprawność danych w formularzu.";
+  return "Nie udało się zalogować. Spróbuj ponownie.";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+export function LoginForm({ returnTo, initialError }: LoginFormProps) {
   const emailId = useId();
   const passwordId = useId();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(() => mapInitialError(initialError));
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     setFormError(null);
     setEmailError(null);
     setPasswordError(null);
@@ -35,10 +50,46 @@ export function LoginForm({ returnTo }: LoginFormProps) {
     });
 
     if (!result.success) {
-      event.preventDefault();
       const fieldErrors = result.error.flatten().fieldErrors;
       setEmailError(fieldErrors.email?.[0] ?? null);
       setPasswordError(fieldErrors.password?.[0] ?? null);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          email: result.data.email,
+          password: result.data.password,
+          returnTo,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as unknown;
+
+      if (!response.ok) {
+        const message =
+          isRecord(payload) && typeof payload.error === "string"
+            ? payload.error
+            : "Nie udało się zalogować. Spróbuj ponownie.";
+        setFormError(message);
+        return;
+      }
+
+      const redirectTo =
+        isRecord(payload) && typeof payload.redirectTo === "string" ? payload.redirectTo : "/dashboard";
+
+      window.location.assign(redirectTo);
+    } catch {
+      setFormError("Nie udało się zalogować. Spróbuj ponownie.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -62,6 +113,7 @@ export function LoginForm({ returnTo }: LoginFormProps) {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              disabled={isSubmitting}
               aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? `${emailId}-error` : undefined}
             />
@@ -80,6 +132,7 @@ export function LoginForm({ returnTo }: LoginFormProps) {
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              disabled={isSubmitting}
               aria-invalid={Boolean(passwordError)}
               aria-describedby={passwordError ? `${passwordId}-error` : undefined}
             />
@@ -95,8 +148,8 @@ export function LoginForm({ returnTo }: LoginFormProps) {
               {formError}
             </p>
           ) : null}
-          <Button type="submit" className="w-full">
-            Zaloguj się
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Logowanie..." : "Zaloguj się"}
           </Button>
         </form>
       </CardContent>

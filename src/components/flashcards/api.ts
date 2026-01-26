@@ -137,7 +137,12 @@ export async function getFlashcards(
 
   let response: Response;
   try {
-    response = await fetchWithTimeout(`/api/flashcards?${queryString}`, { method: "GET" }, DEFAULT_TIMEOUT_MS, signal);
+    response = await fetchWithTimeout(
+      `/api/flashcards?${queryString}`,
+      { method: "GET", credentials: "same-origin" },
+      DEFAULT_TIMEOUT_MS,
+      signal
+    );
   } catch (error) {
     throw mapFlashcardsApiError(error);
   }
@@ -186,6 +191,7 @@ export async function createManualFlashcard(
       "/api/flashcards",
       {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
         },
@@ -221,6 +227,7 @@ export async function updateFlashcard(
       `/api/flashcards/${id}`,
       {
         method: "PUT",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
         },
@@ -252,6 +259,7 @@ export async function deleteFlashcard(id: string, returnTo = "/flashcards"): Pro
       `/api/flashcards/${id}`,
       {
         method: "DELETE",
+        credentials: "same-origin",
       },
       DEFAULT_TIMEOUT_MS
     );

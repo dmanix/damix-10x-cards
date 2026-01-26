@@ -9,6 +9,7 @@ interface Props {
 const { title = "10x Astro Starter" } = Astro.props;
 const currentPath = Astro.url.pathname;
 const showTopbar = currentPath !== "/" && !currentPath.startsWith("/auth");
+const { user } = Astro.locals;
 ---
 
 <!doctype html>
@@ -21,7 +22,7 @@ const showTopbar = currentPath !== "/" && !currentPath.startsWith("/auth");
     <title>{title}</title>
   </head>
   <body>
-    {showTopbar && <Topbar currentPath={currentPath} />}
+    {showTopbar && <Topbar currentPath={currentPath} user={user} />}
     <slot />
   </body>
 </html>

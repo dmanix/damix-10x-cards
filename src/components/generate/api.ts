@@ -154,6 +154,7 @@ export async function generateFlashcards(text: string): Promise<GenerationStartR
       "/api/generations",
       {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
         },
@@ -185,6 +186,7 @@ export async function saveFlashcards(command: CreateFlashcardsCommand): Promise<
       "/api/flashcards",
       {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
         },

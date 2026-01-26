@@ -3,8 +3,9 @@ import AuthLayout from "@/layouts/AuthLayout.astro";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 const returnTo = Astro.url.searchParams.get("returnTo");
+const error = Astro.url.searchParams.get("error");
 ---
 
 <AuthLayout title="Logowanie | Damix 10x Cards">
-  <LoginForm returnTo={returnTo} client:load />
+  <LoginForm returnTo={returnTo} initialError={error} client:load />
 </AuthLayout>

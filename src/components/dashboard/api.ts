@@ -62,7 +62,7 @@ export async function getRecentFlashcards(): Promise<RecentFlashcardsVm> {
   try {
     const response = await fetchWithTimeout(
       "/api/flashcards?page=1&pageSize=5&sort=updatedAt&order=desc",
-      { method: "GET" },
+      { method: "GET", credentials: "same-origin" },
       10000
     );
 
@@ -91,7 +91,7 @@ export async function getRecentGenerations(): Promise<RecentGenerationsVm> {
   try {
     const response = await fetchWithTimeout(
       "/api/generations?page=1&pageSize=5&sort=createdAt&order=desc",
-      { method: "GET" },
+      { method: "GET", credentials: "same-origin" },
       10000
     );
 
