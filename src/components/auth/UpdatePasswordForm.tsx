@@ -16,29 +16,85 @@ const updateSchema = z
     path: ["passwordConfirm"],
   });
 
-export function UpdatePasswordForm() {
+interface UpdatePasswordFormProps {
+  initialError?: string | null;
+}
+
+function mapInitialError(initialError?: string | null): string | null {
+  if (!initialError) return null;
+  if (initialError === "invalid_input") return "Sprawdź poprawność danych w formularzu.";
+  if (initialError === "missing_session") return "Link resetu hasła jest nieprawidłowy lub wygasł.";
+  if (initialError === "update_failed") return "Nie udało się ustawić nowego hasła.";
+  return "Nie udało się ustawić nowego hasła. Spróbuj ponownie.";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+export function UpdatePasswordForm({ initialError }: UpdatePasswordFormProps) {
   const passwordId = useId();
   const confirmId = useId();
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(() => mapInitialError(initialError));
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
     setPasswordError(null);
     setConfirmError(null);
+    setFormError(null);
 
     const result = updateSchema.safeParse({ password, passwordConfirm });
     if (!result.success) {
-      event.preventDefault();
       const fieldErrors = result.error.flatten().fieldErrors;
       setPasswordError(fieldErrors.password?.[0] ?? null);
       setConfirmError(fieldErrors.passwordConfirm?.[0] ?? null);
       return;
     }
 
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/auth/update-password", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          password: result.data.password,
+          passwordConfirm: result.data.passwordConfirm,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as unknown;
+
+      if (!response.ok) {
+        const message =
+          isRecord(payload) && typeof payload.error === "string"
+            ? payload.error
+            : "Nie udało się ustawić nowego hasła.";
+        setFormError(message);
+        return;
+      }
+
+      const redirectTo =
+        isRecord(payload) && typeof payload.redirectTo === "string" ? payload.redirectTo : "/auth/login";
+      setIsSubmitted(true);
+      window.setTimeout(() => {
+        window.location.assign(redirectTo);
+      }, 800);
+    } catch {
+      setFormError("Nie udało się ustawić nowego hasła.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -68,7 +124,7 @@ export function UpdatePasswordForm() {
               onChange={(event) => setPassword(event.target.value)}
               aria-invalid={Boolean(passwordError)}
               aria-describedby={passwordError ? `${passwordId}-error` : undefined}
-              disabled={isSubmitted}
+              disabled={isSubmitting || isSubmitted}
             />
             <p className="text-xs text-muted-foreground" id={passwordError ? `${passwordId}-error` : undefined}>
               {passwordError ?? "Minimum 8 znaków."}
@@ -87,14 +143,19 @@ export function UpdatePasswordForm() {
               onChange={(event) => setPasswordConfirm(event.target.value)}
               aria-invalid={Boolean(confirmError)}
               aria-describedby={confirmError ? `${confirmId}-error` : undefined}
-              disabled={isSubmitted}
+              disabled={isSubmitting || isSubmitted}
             />
             <p className="text-xs text-muted-foreground" id={confirmError ? `${confirmId}-error` : undefined}>
               {confirmError ?? " "}
             </p>
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitted}>
-            Ustaw hasło
+          {formError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {formError}
+            </p>
+          ) : null}
+          <Button type="submit" className="w-full" disabled={isSubmitting || isSubmitted}>
+            {isSubmitting ? "Zapisywanie..." : "Ustaw hasło"}
           </Button>
           {isSubmitted ? (
             <p className="rounded-sm border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">

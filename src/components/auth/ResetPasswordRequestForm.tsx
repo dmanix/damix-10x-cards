@@ -10,24 +10,73 @@ const requestSchema = z.object({
   email: z.string().min(1, "Podaj adres email.").email("Podaj poprawny adres email."),
 });
 
-export function ResetPasswordRequestForm() {
+interface ResetPasswordRequestFormProps {
+  initialError?: string | null;
+  initialSuccess?: boolean;
+}
+
+function mapInitialError(initialError?: string | null): string | null {
+  if (!initialError) return null;
+  if (initialError === "invalid_input") return "Sprawdź poprawność adresu email.";
+  if (initialError === "request_failed") return "Nie udało się wysłać instrukcji resetu hasła.";
+  if (initialError === "invalid_recovery") return "Link resetu hasła jest nieprawidłowy lub wygasł.";
+  return "Nie udało się wysłać instrukcji resetu hasła.";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+export function ResetPasswordRequestForm({ initialError, initialSuccess = false }: ResetPasswordRequestFormProps) {
   const emailId = useId();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [formError, setFormError] = useState<string | null>(() => mapInitialError(initialError));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(initialSuccess);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
     setEmailError(null);
+    setFormError(null);
 
     const result = requestSchema.safeParse({ email: email.trim() });
     if (!result.success) {
-      event.preventDefault();
       const fieldErrors = result.error.flatten().fieldErrors;
       setEmailError(fieldErrors.email?.[0] ?? null);
       return;
     }
 
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ email: result.data.email }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as unknown;
+
+      if (!response.ok) {
+        const message =
+          isRecord(payload) && typeof payload.error === "string"
+            ? payload.error
+            : "Nie udało się wysłać instrukcji resetu hasła.";
+        setFormError(message);
+        return;
+      }
+
+      setIsSubmitted(true);
+    } catch {
+      setFormError("Nie udało się wysłać instrukcji resetu hasła.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -57,14 +106,19 @@ export function ResetPasswordRequestForm() {
               onChange={(event) => setEmail(event.target.value)}
               aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? `${emailId}-error` : undefined}
-              disabled={isSubmitted}
+              disabled={isSubmitting || isSubmitted}
             />
             <p className="text-xs text-muted-foreground" id={emailError ? `${emailId}-error` : undefined}>
               {emailError ?? " "}
             </p>
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitted}>
-            Wyślij link resetu
+          {formError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {formError}
+            </p>
+          ) : null}
+          <Button type="submit" className="w-full" disabled={isSubmitting || isSubmitted}>
+            {isSubmitting ? "Wysyłanie..." : "Wyślij link resetu"}
           </Button>
           {isSubmitted ? (
             <p className="rounded-sm border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
