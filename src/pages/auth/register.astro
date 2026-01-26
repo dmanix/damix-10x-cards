@@ -1,0 +1,10 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { RegisterForm } from "@/components/auth/RegisterForm";
+
+const returnTo = Astro.url.searchParams.get("returnTo");
+---
+
+<AuthLayout title="Rejestracja | Damix 10x Cards">
+  <RegisterForm returnTo={returnTo} client:load />
+</AuthLayout>

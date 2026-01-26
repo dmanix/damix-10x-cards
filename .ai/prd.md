@@ -102,6 +102,18 @@ Głównym problemem, który rozwiązuje aplikacja, jest wysoki koszt czasowy i w
   2. Po kliknięciu przycisku sesja użytkownika jest kończona.
   3. Użytkownik jest przekierowywany na stronę główną lub stronę logowania.
 
+---
+- ID: US-019
+- Tytuł: Odzyskiwanie hasła (przypomnienie hasła)
+- Opis: Jako użytkownik, który nie pamięta hasła, chcę móc zresetować hasło do konta za pomocą adresu e-mail, abym mógł odzyskać dostęp do moich fiszek.
+- Kryteria akceptacji:
+  1. Na ekranie logowania znajduje się link lub przycisk "Przypomnij hasło", który prowadzi do widoku odzyskiwania hasła.
+  2. Widok odzyskiwania hasła zawiera pole na adres e-mail i przycisk wysyłający instrukcje resetu hasła.
+  3. System waliduje format adresu e-mail po stronie klienta i serwera.
+  4. Po wysłaniu żądania użytkownik widzi komunikat potwierdzający wysłanie instrukcji (bez ujawniania, czy e-mail istnieje w systemie).
+  5. Użytkownik otrzymuje wiadomość e-mail z linkiem do ustawienia nowego hasła.
+  6. Użytkownik może ustawić nowe hasło (min. 8 znaków), a następnie przejść do logowania.
+
 ### Generowanie Fiszek przez AI
 ---
 - ID: US-006
