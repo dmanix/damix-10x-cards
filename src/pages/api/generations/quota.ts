@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import type { SupabaseClient } from "../../../db/supabase.client.ts";
-import { DEFAULT_USER_ID, supabaseClient } from "../../../db/supabase.client.ts";
 import { GenerationService } from "../../../lib/services/generationService.ts";
 import { logger } from "../../../lib/logger.ts";
 
@@ -13,10 +12,16 @@ const jsonResponse = (status: number, body: unknown): Response =>
   });
 
 export const GET: APIRoute = async ({ locals }) => {
-  const supabase = (locals as { supabase?: SupabaseClient }).supabase ?? supabaseClient;
+  const supabase = (locals as { supabase?: SupabaseClient }).supabase;
+  if (!supabase) {
+    return jsonResponse(500, { code: "server_error", message: "Supabase client unavailable." });
+  }
 
   const service = new GenerationService(supabase);
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse(401, { code: "unauthorized", message: "Authentication required." });
+  }
 
   try {
     const usage = await service.getDailyUsage(userId);

@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 
 import type { SupabaseClient } from "../../db/supabase.client.ts";
-import { DEFAULT_USER_ID } from "../../db/supabase.client.ts";
 import type { CreateFlashcardsResponse } from "../../types.ts";
 import { FlashcardService, GenerationOwnershipError } from "../../lib/services/flashcardService.ts";
 import { validateCreateFlashcardsCommand, validateFlashcardListQuery } from "../../lib/validation/flashcards.ts";
@@ -21,7 +20,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     return jsonResponse(500, { code: "server_error", message: "Supabase client unavailable." });
   }
 
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse(401, { code: "unauthorized", message: "Authentication required." });
+  }
 
   const searchParams = new URL(request.url).searchParams;
   const pickParam = (name: string): string | undefined => {
@@ -67,7 +69,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (!supabase) {
     return jsonResponse(500, { code: "server_error", message: "Supabase client unavailable." });
   }
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse(401, { code: "unauthorized", message: "Authentication required." });
+  }
   const service = new FlashcardService(supabase);
 
   let payload: unknown;

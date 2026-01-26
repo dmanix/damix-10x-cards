@@ -40,7 +40,3 @@ export function createSupabaseServerInstance(context: { headers: Headers; cookie
     },
   });
 }
-
-/** @deprecated Temporary fallback until endpoints use `Astro.locals.user.id`. */
-export const DEFAULT_USER_ID = "6baa87f1-5770-4c17-8562-a533c2774219";
-//export const DEFAULT_USER_ID = "44653c90-2ab6-4d3e-bcf5-e1c462f4a3b6";

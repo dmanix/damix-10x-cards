@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import type { SupabaseClient } from "../../../db/supabase.client.ts";
-import { DEFAULT_USER_ID, supabaseClient } from "../../../db/supabase.client.ts";
 import { GenerationService } from "../../../lib/services/generationService.ts";
 import { validateGenerationIdParam } from "../../../lib/validation/generations.ts";
 import { logger } from "../../../lib/logger.ts";
@@ -14,7 +13,10 @@ const jsonResponse = (status: number, body: unknown): Response =>
   });
 
 export const GET: APIRoute = async ({ params, locals }) => {
-  const supabase = (locals as { supabase?: SupabaseClient }).supabase ?? supabaseClient;
+  const supabase = (locals as { supabase?: SupabaseClient }).supabase;
+  if (!supabase) {
+    return jsonResponse(500, { code: "server_error", message: "Supabase client unavailable." });
+  }
 
   const parsed = validateGenerationIdParam({ id: params.id });
   if (!parsed.success) {
@@ -25,7 +27,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
   }
 
   const service = new GenerationService(supabase);
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse(401, { code: "unauthorized", message: "Authentication required." });
+  }
 
   try {
     const generation = await service.getGenerationById(userId, parsed.data.id);

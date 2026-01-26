@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 
 import { FlashcardNotFoundError, FlashcardService } from "../../../lib/services/flashcardService.ts";
 import { logger } from "../../../lib/logger.ts";
-import { DEFAULT_USER_ID, type SupabaseClient } from "../../../db/supabase.client.ts";
+import type { SupabaseClient } from "../../../db/supabase.client.ts";
 import type {
   ErrorResponse,
   FlashcardGetResponse,
@@ -36,7 +36,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
     );
   }
 
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse({ code: "unauthorized", message: "Authentication required." }, 401);
+  }
   const service = new FlashcardService(supabase);
 
   try {
@@ -90,7 +93,10 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
     command.back = parsedBody.back;
   }
 
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse({ code: "unauthorized", message: "Authentication required." }, 401);
+  }
   const service = new FlashcardService(supabase);
 
   try {
@@ -125,7 +131,10 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     return jsonResponse({ code: "invalid_request", message: "Flashcard id must be a valid UUID" }, 400);
   }
 
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse({ code: "unauthorized", message: "Authentication required." }, 401);
+  }
   const service = new FlashcardService(supabase);
 
   try {

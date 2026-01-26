@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import type { SupabaseClient } from "../../db/supabase.client.ts";
-import { DEFAULT_USER_ID, supabaseClient } from "../../db/supabase.client.ts";
 import { GenerationService, InputLengthError, DailyLimitExceededError } from "../../lib/services/generationService.ts";
 import { validateGenerationCreateCommand, validateGenerationListQuery } from "../../lib/validation/generations.ts";
 import { OpenRouterService } from "../../lib/openrouter/openRouterService.ts";
@@ -15,7 +14,10 @@ const jsonResponse = (status: number, body: unknown): Response =>
   });
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const supabase = (locals as { supabase?: SupabaseClient }).supabase ?? supabaseClient;
+  const supabase = (locals as { supabase?: SupabaseClient }).supabase;
+  if (!supabase) {
+    return jsonResponse(500, { code: "server_error", message: "Supabase client unavailable." });
+  }
 
   const searchParams = new URL(request.url).searchParams;
   const pickParam = (name: string): string | undefined => {
@@ -39,7 +41,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
   }
 
   const service = new GenerationService(supabase);
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse(401, { code: "unauthorized", message: "Authentication required." });
+  }
 
   try {
     const response = await service.listGenerations(userId, parsed.data);
@@ -56,7 +61,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const supabase = (locals as { supabase?: typeof supabaseClient }).supabase ?? supabaseClient;
+  const supabase = (locals as { supabase?: SupabaseClient }).supabase;
+  if (!supabase) {
+    return jsonResponse(500, { code: "server_error", message: "Supabase client unavailable." });
+  }
 
   // Initialize OpenRouter service if API key is available
   let openRouterService: OpenRouterService | undefined;
@@ -85,7 +93,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const service = new GenerationService(supabase, undefined, openRouterService);
-  const userId = DEFAULT_USER_ID;
+  const userId = (locals as { user?: { id: string } | null }).user?.id;
+  if (!userId) {
+    return jsonResponse(401, { code: "unauthorized", message: "Authentication required." });
+  }
 
   let payload: unknown;
   try {
