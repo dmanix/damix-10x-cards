@@ -2,12 +2,6 @@
 
 Celem testów jest zapewnienie jakości MVP aplikacji **Damix 10x Cards**: logowanie/rejestracja/reset hasła, generowanie fiszek z użyciem AI (OpenRouter) oraz zarządzanie kolekcją fiszek (CRUD) z zachowaniem bezpieczeństwa sesji i izolacji danych użytkowników. Projekt działa w architekturze **Astro 5 SSR + React 19 + Supabase + TypeScript**.
 
-> **Aktualizacja planu (26.01.2026)**: Zaktualizowano stack narzędziowy do najlepszych praktyk 2026:
-> - **MSW 2.x** zamiast nock (nowoczesne mockowanie HTTP)
-> - **@axe-core/playwright** dla automatycznych testów a11y
-> - **Bruno** zamiast Postman (git-friendly, offline-first)
-> - **Bez zmian w kodzie aplikacji** - wszystkie narzędzia to dev dependencies
-
 **Cele szczegółowe**:
 - **Stabilność kluczowych ścieżek**: `/auth/*`, `/dashboard`, `/generate`, `/flashcards`, `/api/*`.
 - **Jakość i poprawność walidacji** (Zod + limity długości) oraz mapowania błędów w UI.

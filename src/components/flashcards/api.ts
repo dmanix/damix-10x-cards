@@ -17,7 +17,7 @@ export interface UpdateFlashcardPayload {
   source: FlashcardSource;
 }
 
-function mapFlashcardsApiError(error: unknown, status?: number): FlashcardsApiErrorVm {
+export function mapFlashcardsApiError(error: unknown, status?: number): FlashcardsApiErrorVm {
   const errorResponse = error as ErrorResponse | undefined;
   const message = errorResponse?.message;
   const code = errorResponse?.code;
@@ -95,16 +95,16 @@ async function readErrorPayload(response: Response): Promise<ErrorResponse | und
   }
 }
 
-async function fetchWithTimeout(
+export async function fetchWithTimeout(
   input: RequestInfo | URL,
   init: RequestInit,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   signal?: AbortSignal
 ): Promise<Response> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   const abortHandler = () => controller.abort();
 
+  // If an external signal is already aborted, ensure our controller is aborted too.
   if (signal) {
     if (signal.aborted) {
       controller.abort();
@@ -113,10 +113,33 @@ async function fetchWithTimeout(
     }
   }
 
+  const fetchPromise = fetch(input, { ...init, signal: controller.signal });
+
+  // Create a timeout promise that aborts the controller and rejects with a DOMException
+  // containing the 'AbortError' text so callers can reliably match on it.
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<Response>((_resolve, reject) => {
+    timeoutId = setTimeout(() => {
+      // Abort the in-flight fetch so implementations that listen to the signal will react.
+      controller.abort();
+      // Reject with a DOMException whose message includes 'AbortError' to match tests/consumers.
+      reject(new DOMException("AbortError", "AbortError"));
+    }, timeoutMs);
+  });
+
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await Promise.race([fetchPromise, timeoutPromise]);
+  } catch (err: unknown) {
+    // Normalize abort-related errors so callers/tests can reliably match on "AbortError".
+    const asString = typeof err === "string" ? err : err instanceof Error ? err.message : String(err);
+    if ((err instanceof DOMException && err.name === "AbortError") || /Abort/i.test(asString)) {
+      throw new DOMException("AbortError", "AbortError");
+    }
+    throw err;
   } finally {
-    clearTimeout(timeoutId);
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
     if (signal) {
       signal.removeEventListener("abort", abortHandler);
     }

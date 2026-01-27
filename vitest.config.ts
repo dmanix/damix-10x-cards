@@ -32,8 +32,8 @@ export default defineConfig({
       //   statements: 80
       // }
     },
-    // Enable UI mode for visual test exploration
-    ui: true,
+    // Do not automaticallt enable UI mode for visual test exploration
+    ui: false,
     // Watch mode configuration
     watch: false,
   },
