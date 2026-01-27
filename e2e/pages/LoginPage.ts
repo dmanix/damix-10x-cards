@@ -22,7 +22,16 @@ export class LoginPage extends BasePage {
   async goto(returnTo?: string) {
     const search = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
     await super.goto(`/auth/login${search}`);
-    await this.loginForm.waitFor({ state: "visible" });
+
+    // Wait for the page to fully load
+    await this.page.waitForLoadState("networkidle");
+
+    // Wait for React hydration - the form element should have the data-test-id attribute
+    // We use a more robust approach: wait for the specific attribute to appear
+    await this.page.waitForSelector('[data-test-id="login-form"]', {
+      state: "visible",
+      timeout: 15000,
+    });
   }
 
   async login(email: string, password: string) {

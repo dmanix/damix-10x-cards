@@ -42,14 +42,21 @@ export interface Logger {
   error: (payload: Record<string, unknown>) => void;
 }
 
+const readEnv = (key: string): string | undefined => {
+  // In Astro/Vite runtime we have import.meta.env; in Node scripts (e.g. Playwright teardown) we don't.
+  const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  if (metaEnv && key in metaEnv) return metaEnv[key];
+  return typeof process !== "undefined" ? process.env[key] : undefined;
+};
+
 export const createLogger = (options?: {
   level?: LogLevel;
   destination?: LogDestination;
   filePath?: string;
 }): Logger => {
-  const level = options?.level ?? normalizeLevel(import.meta.env.LOG_LEVEL);
-  const destination = options?.destination ?? normalizeDestination(import.meta.env.LOG_OUTPUT);
-  const filePath = options?.filePath ?? import.meta.env.LOG_FILE_PATH ?? "./logs/app.log";
+  const level = options?.level ?? normalizeLevel(readEnv("LOG_LEVEL"));
+  const destination = options?.destination ?? normalizeDestination(readEnv("LOG_OUTPUT"));
+  const filePath = options?.filePath ?? readEnv("LOG_FILE_PATH") ?? "./logs/app.log";
 
   const threshold = LEVEL_ORDER[level];
   const canLog = (value: LogLevel): boolean => LEVEL_ORDER[value] >= threshold;

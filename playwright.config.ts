@@ -12,6 +12,8 @@ const shouldStartWebServer = process.env.PLAYWRIGHT_START_SERVER !== "false";
 export default defineConfig({
   testDir: "./e2e",
 
+  globalTeardown: "./e2e/global-teardown.ts",
+
   /* Run tests in files in parallel */
   fullyParallel: true,
 
