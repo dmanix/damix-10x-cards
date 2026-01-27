@@ -24,7 +24,7 @@ export class BasePage {
   }
 
   getByTestId(testId: string): Locator {
-    return this.page.getByTestId(testId);
+    return this.page.locator(`[data-test-id="${testId}"]`);
   }
 
   async clickAndWait(selector: string) {

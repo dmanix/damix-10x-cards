@@ -105,7 +105,7 @@ export function CreateManualFlashcardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent data-test-id="flashcard-create-dialog">
         <DialogHeader>
           <DialogTitle>Dodaj nową fiszkę</DialogTitle>
           <DialogDescription>Wprowadź treść fiszki, która trafi do Twojej kolekcji.</DialogDescription>
@@ -125,6 +125,7 @@ export function CreateManualFlashcardDialog({
               aria-describedby={frontError ? `${frontId}-error` : undefined}
               aria-invalid={Boolean(frontError)}
               disabled={isSubmitting}
+              data-test-id="flashcard-create-front"
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{frontError ? <span id={`${frontId}-error`}>{frontError}</span> : " "}</span>
@@ -147,6 +148,7 @@ export function CreateManualFlashcardDialog({
               aria-describedby={backError ? `${backId}-error` : undefined}
               aria-invalid={Boolean(backError)}
               disabled={isSubmitting}
+              data-test-id="flashcard-create-back"
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{backError ? <span id={`${backId}-error`}>{backError}</span> : " "}</span>
@@ -164,10 +166,21 @@ export function CreateManualFlashcardDialog({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+            data-test-id="flashcard-create-cancel"
+          >
             Anuluj
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={isSubmitting || !isValid}>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting || !isValid}
+            data-test-id="flashcard-create-save"
+          >
             {isSubmitting ? "Zapisywanie..." : "Zapisz"}
           </Button>
         </DialogFooter>

@@ -471,7 +471,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   use: {
-    baseURL: 'http://localhost:4321',
+    baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
@@ -482,7 +482,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev',
-    port: 4321,
+    port: 3000,
     reuseExistingServer: !process.env.CI,
   },
 });

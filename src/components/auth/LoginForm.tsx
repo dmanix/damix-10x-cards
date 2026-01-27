@@ -100,7 +100,14 @@ export function LoginForm({ returnTo, initialError }: LoginFormProps) {
         <CardDescription>Wpisz swoje dane, aby uzyskać dostęp do konta.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action="/api/auth/login" method="post" noValidate className="space-y-4" onSubmit={handleSubmit}>
+        <form
+          action="/api/auth/login"
+          method="post"
+          noValidate
+          className="space-y-4"
+          onSubmit={handleSubmit}
+          data-test-id="login-form"
+        >
           {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
           <div className="space-y-2">
             <label htmlFor={emailId} className="text-sm font-medium">
@@ -116,6 +123,7 @@ export function LoginForm({ returnTo, initialError }: LoginFormProps) {
               disabled={isSubmitting}
               aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? `${emailId}-error` : undefined}
+              data-test-id="login-email"
             />
             <p className="text-xs text-muted-foreground" id={emailError ? `${emailId}-error` : undefined}>
               {emailError ?? " "}
@@ -135,6 +143,7 @@ export function LoginForm({ returnTo, initialError }: LoginFormProps) {
               disabled={isSubmitting}
               aria-invalid={Boolean(passwordError)}
               aria-describedby={passwordError ? `${passwordId}-error` : undefined}
+              data-test-id="login-password"
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span id={passwordError ? `${passwordId}-error` : undefined}>{passwordError ?? " "}</span>
@@ -148,7 +157,7 @@ export function LoginForm({ returnTo, initialError }: LoginFormProps) {
               {formError}
             </p>
           ) : null}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" className="w-full" disabled={isSubmitting} data-test-id="login-submit">
             {isSubmitting ? "Logowanie..." : "Zaloguj się"}
           </Button>
         </form>
