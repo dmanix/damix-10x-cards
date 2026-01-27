@@ -1,0 +1,48 @@
+---
+alwaysApply: true
+---
+## TESTING STRUCTURE
+
+### Test File Organization
+
+**IMPORTANT**: All unit and integration tests MUST be placed in the `src/tests/` directory.
+
+#### Directory Structure
+
+```
+src/tests/
+├── setup.ts                    # Global test setup and configuration
+├── mocks/                      # MSW mocks for API testing
+│   ├── handlers.ts             # Request handlers
+│   ├── server.ts               # MSW server (Node.js)
+│   └── browser.ts              # MSW worker (browser)
+├── [feature].test.ts           # Feature-specific tests
+└── README.md                   # Testing documentation
+```
+
+#### Naming Conventions
+
+- Test files: `[feature-name].test.ts` or `[feature-name].spec.ts`
+- Test files for specific modules: Name after the module being tested
+  - Testing `src/lib/auth.ts` → `src/tests/auth.test.ts`
+  - Testing `src/pages/api/flashcards.ts` → `src/tests/flashcards-api.test.ts`
+  - Testing `src/components/Card.tsx` → `src/tests/Card.test.tsx`
+
+#### Rules
+
+1. ✅ **DO**: Place all unit tests in `src/tests/`
+2. ✅ **DO**: Use descriptive test file names matching the feature
+3. ✅ **DO**: Group related tests in the same file using `describe` blocks
+4. ❌ **DON'T**: Place `.test.ts` or `.spec.ts` files next to source code
+5. ❌ **DON'T**: Create tests outside of `src/tests/` directory (except E2E tests in `e2e/`)
+
+#### E2E Tests
+
+E2E tests are an exception and should be placed in the `e2e/` directory at the root level.
+
+```
+e2e/
+├── [feature].spec.ts           # E2E test specs
+├── pages/                      # Page Object Models
+└── fixtures/                   # Test data
+```

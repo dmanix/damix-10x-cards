@@ -1,8 +1,8 @@
 ---
 description: 
-globs: 
 alwaysApply: true
 ---
+
 # AI Rules for {app-name}
 
 {project-description}
@@ -29,8 +29,14 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
 - `./src/components/ui` - Client-side components from Shadcn/ui
 - `./src/lib` - Services and helpers 
+- `./src/tests` - All unit and integration tests (`.test.ts`, `.spec.ts` files)
+- `./src/tests/mocks` - MSW handlers for API mocking
+- `./src/tests/setup.ts` - Global test configuration
 - `./src/assets` - static internal assets
 - `./public` - public assets
+- `./e2e` - End-to-end tests with Playwright
+- `./e2e/pages` - Page Object Model classes
+- `./e2e/fixtures` - Test data and fixtures
 
 When modifying the directory structure, always update this section.
 

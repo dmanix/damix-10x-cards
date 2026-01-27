@@ -80,6 +80,20 @@ The app is aimed at students, pupils, and self‑taught learners who want to ben
 - **Git hooks**: Husky + lint‑staged to automatically lint/format staged files before commits.
 - **Package manager**: npm (see `package-lock.json`).
 
+**Testing**
+
+- **Unit & Integration testing**:
+  - **Vitest** with `@vitest/coverage-v8` and `@vitest/ui` for fast, native Vite/Astro testing.
+  - **MSW 2.x** (Mock Service Worker) for modern HTTP mocking (OpenRouter, Supabase) using fetch-based API.
+  - **Zod** schemas for input/output validation testing.
+
+- **E2E testing**:
+  - **Playwright** for browser-based UI and API testing with auto-waiting and multi-browser support (Chromium/Firefox/WebKit).
+  - **@axe-core/playwright** for automated accessibility (a11y) testing integrated into E2E flows.
+
+- **API testing & manual verification**:
+  - **Bruno** for git-friendly, offline-first API collections (alternative to Postman).
+
 **CI/CD & hosting**
 
 - **CI/CD**: GitHub Actions for continuous integration and delivery pipelines (workflows can run tests, linters, and builds on each push/PR).

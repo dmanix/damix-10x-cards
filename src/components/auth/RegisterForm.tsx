@@ -90,9 +90,7 @@ export function RegisterForm({ returnTo, initialError }: RegisterFormProps) {
 
       if (!response.ok) {
         const message =
-          isRecord(payload) && typeof payload.error === "string"
-            ? payload.error
-            : "Nie udało się utworzyć konta.";
+          isRecord(payload) && typeof payload.error === "string" ? payload.error : "Nie udało się utworzyć konta.";
         setFormError(message);
         return;
       }

@@ -86,13 +86,7 @@ export function ResetPasswordRequestForm({ initialError, initialSuccess = false 
         <CardDescription>Wyślemy instrukcję ustawienia nowego hasła.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form
-          action="/api/auth/reset-password"
-          method="post"
-          noValidate
-          className="space-y-4"
-          onSubmit={handleSubmit}
-        >
+        <form action="/api/auth/reset-password" method="post" noValidate className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label htmlFor={emailId} className="text-sm font-medium">
               Email

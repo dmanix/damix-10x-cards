@@ -18,3 +18,16 @@ AI - Komunikacja z modelami przez usługę Openrouter.ai:
 CI/CD i Hosting:
 - Github Actions do tworzenia pipeline’ów CI/CD
 - DigitalOcean do hostowania aplikacji za pośrednictwem obrazu docker
+
+Testy:
+- Testy jednostkowe i integracyjne:
+  - Vitest + @vitest/coverage-v8 + @vitest/ui - nowoczesne narzędzie do testów jednostkowych z natywnym wsparciem dla Vite/Astro, 5-10x szybsze niż Jest
+  - MSW 2.x (Mock Service Worker) - mockowanie HTTP/OpenRouter/Supabase w testach z nowoczesnym API opartym na fetch
+  - Zod - walidacja schematów (już w projekcie)
+
+- Testy E2E (end-to-end):
+  - Playwright - testy UI i API w przeglądarce z wbudowanym auto-waiting, trace viewer i wsparciem dla wielu przeglądarek (Chromium/Firefox/WebKit)
+  - @axe-core/playwright - automatyczne testy accessibility (a11y) zintegrowane z testami E2E
+
+- Testy API i weryfikacja manualna:
+  - Bruno - git-friendly, offline-first narzędzie do testowania API (nowoczesna alternatywa dla Postman, z collections w repozytorium)

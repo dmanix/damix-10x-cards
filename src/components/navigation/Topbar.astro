@@ -42,23 +42,25 @@ const links = [
     </div>
 
     <div class="flex items-center gap-3">
-      {user ? (
-        <>
-          <span class="text-sm text-muted-foreground">{user.email ?? "Użytkownik"}</span>
-          <form method="post" action="/api/auth/logout">
-            <button
-              type="submit"
-              class="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              Wyloguj
-            </button>
-          </form>
-        </>
-      ) : (
-        <a href="/auth/login" class="text-sm font-medium text-muted-foreground hover:text-primary">
-          Zaloguj się
-        </a>
-      )}
+      {
+        user ? (
+          <>
+            <span class="text-sm text-muted-foreground">{user.email ?? "Użytkownik"}</span>
+            <form method="post" action="/api/auth/logout">
+              <button
+                type="submit"
+                class="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                Wyloguj
+              </button>
+            </form>
+          </>
+        ) : (
+          <a href="/auth/login" class="text-sm font-medium text-muted-foreground hover:text-primary">
+            Zaloguj się
+          </a>
+        )
+      }
     </div>
   </div>
 </header>

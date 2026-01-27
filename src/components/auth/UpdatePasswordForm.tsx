@@ -104,13 +104,7 @@ export function UpdatePasswordForm({ initialError }: UpdatePasswordFormProps) {
         <CardDescription>Wprowadź nowe hasło, aby dokończyć odzyskiwanie konta.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form
-          action="/api/auth/update-password"
-          method="post"
-          noValidate
-          className="space-y-4"
-          onSubmit={handleSubmit}
-        >
+        <form action="/api/auth/update-password" method="post" noValidate className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label htmlFor={passwordId} className="text-sm font-medium">
               Nowe hasło
