@@ -282,14 +282,8 @@ create policy app_config_delete_anon_deny
   to anon
   using (false);
 
--- authenticated policies (deny all)
--- rationale: authenticated users should not read or modify global configuration.
-create policy app_config_select_authenticated_deny
-  on public.app_config
-  for select
-  to authenticated
-  using (false);
-
+-- authenticated policies (deny insert, update, delete)
+-- rationale: authenticated users should not modify global configuration.
 create policy app_config_insert_authenticated_deny
   on public.app_config
   for insert
@@ -308,6 +302,14 @@ create policy app_config_delete_authenticated_deny
   for delete
   to authenticated
   using (false);
+
+-- ensure authenticated users can read configuration values.
+-- rationale: read-only access for application usage; writes remain blocked.
+create policy app_config_select_authenticated_read
+  on public.app_config
+  for select
+  to authenticated
+  using (true);
 
 commit;
 
