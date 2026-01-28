@@ -1,4 +1,4 @@
-import { Page, Locator } from "@playwright/test";
+import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "./BasePage";
 
 /**
@@ -12,6 +12,7 @@ export class FlashcardsPage extends BasePage {
   readonly backTextarea: Locator;
   readonly saveButton: Locator;
   readonly cancelButton: Locator;
+  readonly listSection: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -22,6 +23,7 @@ export class FlashcardsPage extends BasePage {
     this.backTextarea = this.getByTestId("flashcard-create-back");
     this.saveButton = this.getByTestId("flashcard-create-save");
     this.cancelButton = this.getByTestId("flashcard-create-cancel");
+    this.listSection = this.page.getByRole("region", { name: "Lista fiszek" });
   }
 
   async goto() {
@@ -45,6 +47,19 @@ export class FlashcardsPage extends BasePage {
   }
 
   async openCreateDialog() {
+    // Wait for the toolbar section to be ready (not busy)
+    const toolbarSection = this.page.getByRole("search", { name: "Wyszukiwanie i filtry fiszek" });
+    await expect(toolbarSection).toBeVisible();
+    await expect(toolbarSection).not.toHaveAttribute("aria-busy", "true");
+
+    // Ensure button is ready for interaction
+    await this.addFlashcardButton.scrollIntoViewIfNeeded();
+    await expect(this.addFlashcardButton).toBeVisible();
+    await expect(this.addFlashcardButton).toBeEnabled();
+    
+    // Additional wait to ensure React handlers are fully attached after hydration
+    await this.page.waitForTimeout(200);
+    
     await this.addFlashcardButton.click();
     await this.createDialog.waitFor({ state: "visible", timeout: 10000 });
   }
@@ -65,6 +80,22 @@ export class FlashcardsPage extends BasePage {
   async cancelCreate() {
     await this.cancelButton.click();
     await this.createDialog.waitFor({ state: "hidden" });
+  }
+
+  async expectFlashcardVisible(front: string, back: string) {
+    await expect(this.listSection).toBeVisible();
+    const card = this.listSection
+      .locator("li")
+      .filter({ hasText: front })
+      .filter({ hasText: back })
+      .first();
+    await expect(card).toBeVisible();
+
+    const frontContent = card.getByText(front, { exact: true });
+    const backContent = card.getByText(back, { exact: true });
+
+    await expect(frontContent).toHaveText(front);
+    await expect(backContent).toHaveText(back);
   }
 
   async createManualFlashcard(front: string, back: string) {

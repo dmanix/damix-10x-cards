@@ -27,5 +27,9 @@ test.describe("Flashcards create flow", () => {
     await flashcardsPage.saveFlashcard();
 
     await expect(flashcardsPage.createDialog).toBeHidden();
+    await flashcardsPage.expectFlashcardVisible(
+      testFlashcards.simple.front_text,
+      testFlashcards.simple.back_text
+    );
   });
 });
