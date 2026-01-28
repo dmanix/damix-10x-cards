@@ -190,7 +190,8 @@ export class GenerationService {
       .select(
         "id, status, created_at, finished_at, generated_count, accepted_original_count, accepted_edited_count, error_code, error_message",
         { count: "exact" }
-      );
+      )
+      .eq("user_id", userId);
 
     if (status) {
       queryBuilder = queryBuilder.eq("status", status);
