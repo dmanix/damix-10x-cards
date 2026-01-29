@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   });
 
   if (error) {
-    console.error("Supabase reset password error:", error);
+    // Intentionally ignore to avoid leaking account existence.
   }
 
   if (isHtmlFormPost) {

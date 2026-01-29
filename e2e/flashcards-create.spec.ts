@@ -16,10 +16,10 @@ test.describe("Flashcards create flow", () => {
 
     await loginPage.goto("/flashcards");
     await loginPage.login(email, password);
-    
+
     // Wait for redirect to /flashcards and React hydration
     await flashcardsPage.waitForHydration();
-    
+
     await flashcardsPage.openCreateDialog();
 
     await flashcardsPage.fillFront(testFlashcards.simple.front_text);
@@ -27,9 +27,6 @@ test.describe("Flashcards create flow", () => {
     await flashcardsPage.saveFlashcard();
 
     await expect(flashcardsPage.createDialog).toBeHidden();
-    await flashcardsPage.expectFlashcardVisible(
-      testFlashcards.simple.front_text,
-      testFlashcards.simple.back_text
-    );
+    await flashcardsPage.expectFlashcardVisible(testFlashcards.simple.front_text, testFlashcards.simple.back_text);
   });
 });

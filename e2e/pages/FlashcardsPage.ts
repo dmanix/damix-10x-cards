@@ -56,10 +56,10 @@ export class FlashcardsPage extends BasePage {
     await this.addFlashcardButton.scrollIntoViewIfNeeded();
     await expect(this.addFlashcardButton).toBeVisible();
     await expect(this.addFlashcardButton).toBeEnabled();
-    
+
     // Additional wait to ensure React handlers are fully attached after hydration
     await this.page.waitForTimeout(200);
-    
+
     await this.addFlashcardButton.click();
     await this.createDialog.waitFor({ state: "visible", timeout: 10000 });
   }
@@ -84,11 +84,7 @@ export class FlashcardsPage extends BasePage {
 
   async expectFlashcardVisible(front: string, back: string) {
     await expect(this.listSection).toBeVisible();
-    const card = this.listSection
-      .locator("li")
-      .filter({ hasText: front })
-      .filter({ hasText: back })
-      .first();
+    const card = this.listSection.locator("li").filter({ hasText: front }).filter({ hasText: back }).first();
     await expect(card).toBeVisible();
 
     const frontContent = card.getByText(front, { exact: true });

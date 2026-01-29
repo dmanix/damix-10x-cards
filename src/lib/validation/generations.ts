@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { GenerationCreateCommand, GenerationListQuery } from "../../types";
+import type { GenerationCreateCommand } from "../../types";
 
 export const generationCreateSchema = z.object({
   text: z
