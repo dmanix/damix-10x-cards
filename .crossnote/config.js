@@ -1,4 +1,6 @@
-({
+/* eslint-env node */
+/* global module */
+module.exports = {
   katexConfig: {
     macros: {},
   },
@@ -12,4 +14,4 @@
   mermaidConfig: {
     startOnLoad: false,
   },
-});
+};

@@ -4,11 +4,7 @@ import { RecentGenerationsCard } from "./RecentGenerationsCard";
 import { getRecentFlashcards, getRecentGenerations } from "./api";
 import type { DashboardTileState, RecentFlashcardsVm, RecentGenerationsVm, DashboardApiErrorVm } from "./types";
 
-interface DashboardViewProps {
-  returnTo?: string;
-}
-
-export const DashboardView = ({ returnTo = "/dashboard" }: DashboardViewProps) => {
+export const DashboardView = () => {
   const [flashcardsState, setFlashcardsState] = useState<DashboardTileState<RecentFlashcardsVm>>({
     status: "idle",
   });

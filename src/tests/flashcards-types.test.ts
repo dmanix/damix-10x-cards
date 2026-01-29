@@ -92,7 +92,9 @@ describe("mapFlashcardDtoToCardVm", () => {
   });
 
   it("maps dto fields and formats date labels", () => {
-    const toLocaleSpy = vi.spyOn(Date.prototype, "toLocaleString").mockImplementation(function (locales?: string | string[]) {
+    const toLocaleSpy = vi.spyOn(Date.prototype, "toLocaleString").mockImplementation(function (
+      locales?: string | string[]
+    ) {
       return `formatted-${String(locales)}-${this.toISOString()}`;
     });
 

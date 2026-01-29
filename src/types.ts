@@ -131,7 +131,7 @@ export interface UpdateFlashcardResponse {
   updatedAt: FlashcardRow["updated_at"];
 }
 
-export type DeleteFlashcardResponse = void;
+export type DeleteFlashcardResponse = undefined;
 
 // Admin
 export interface AdminAppConfigResponse {

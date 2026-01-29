@@ -84,7 +84,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
 
   if (error) {
-    console.error("Supabase update password error:", error);
     if (isHtmlFormPost) {
       return buildUpdateRedirect(request, "update_failed");
     }

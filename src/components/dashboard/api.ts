@@ -2,6 +2,15 @@ import type { FlashcardListResponse, GenerationListResponse } from "@/types";
 import type { DashboardApiErrorVm, RecentFlashcardsVm, RecentGenerationsVm } from "./types";
 import { mapFlashcardDtoToRecentVm, mapGenerationDtoToRecentVm } from "./types";
 
+function hasErrorMessage(error: unknown): error is { message: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message: unknown }).message === "string"
+  );
+}
+
 function mapDashboardApiError(error: unknown, status?: number): DashboardApiErrorVm {
   if (status === 401) {
     return {
@@ -80,7 +89,7 @@ export async function getRecentFlashcards(): Promise<RecentFlashcardsVm> {
       total: data.total,
     };
   } catch (error) {
-    if ((error as any)?.message === "Unauthorized") throw error;
+    if (hasErrorMessage(error) && error.message === "Unauthorized") throw error;
     // Mapujemy błąd i rzucamy jako DashboardApiErrorVm
     throw mapDashboardApiError(error);
   }
@@ -109,7 +118,7 @@ export async function getRecentGenerations(): Promise<RecentGenerationsVm> {
       total: data.total,
     };
   } catch (error) {
-    if ((error as any)?.message === "Unauthorized") throw error;
+    if (hasErrorMessage(error) && error.message === "Unauthorized") throw error;
     throw mapDashboardApiError(error);
   }
 }

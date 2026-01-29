@@ -215,12 +215,7 @@ export function FlashcardsToolbar({
         </div>
 
         <div className="flex items-end gap-2">
-          <Button
-            type="button"
-            onClick={onOpenCreate}
-            disabled={isBusy}
-            data-test-id="flashcards-add-button"
-          >
+          <Button type="button" onClick={onOpenCreate} disabled={isBusy} data-test-id="flashcards-add-button">
             Dodaj nową fiszkę
           </Button>
           <Button type="button" variant="outline" onClick={onResetFilters} disabled={isBusy}>

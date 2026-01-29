@@ -61,10 +61,7 @@ export function ProposalEditor({ initialFront, initialBack, onSaveAndAccept, onC
   };
 
   return (
-    <div
-      className="space-y-4 rounded-sm border border-border border-l-4 border-l-primary bg-card p-4"
-      onKeyDown={handleKeyDown}
-    >
+    <div className="space-y-4 rounded-sm border border-border border-l-4 border-l-primary bg-card p-4">
       <div className="mb-2 flex items-center gap-2">
         <span className="text-sm font-medium">Edycja propozycji</span>
         <span className="text-xs text-muted-foreground">(Ctrl+Enter zapisuje, Esc anuluje)</span>
@@ -80,6 +77,7 @@ export function ProposalEditor({ initialFront, initialBack, onSaveAndAccept, onC
           id="edit-front"
           value={front}
           onChange={(e) => setFront(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Pytanie lub pojęcie..."
           className="min-h-[80px] resize-y rounded-sm"
           aria-invalid={!!frontError}
@@ -109,6 +107,7 @@ export function ProposalEditor({ initialFront, initialBack, onSaveAndAccept, onC
           id="edit-back"
           value={back}
           onChange={(e) => setBack(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Odpowiedź lub definicja..."
           className="min-h-[120px] resize-y rounded-sm"
           aria-invalid={!!backError}
