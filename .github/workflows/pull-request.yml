@@ -91,6 +91,7 @@ jobs:
     if: ${{ always() }}
     permissions:
       contents: read
+      actions: read
       pull-requests: write
     env:
       LINT_RESULT: ${{ needs.lint.result }}
@@ -103,7 +104,6 @@ jobs:
           script: |
             const { owner, repo, number } = context.issue;
             const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
-            const artifactsUrl = `${runUrl}/artifacts`;
             const results = {
               lint: process.env.LINT_RESULT,
               unit: process.env.UNIT_RESULT,
@@ -113,13 +113,28 @@ jobs:
             const header = isSuccess
               ? "✅ Pull request checks passed."
               : "❌ Pull request checks failed.";
+            const artifactsResponse = await github.rest.actions.listWorkflowRunArtifacts({
+              owner,
+              repo,
+              run_id: context.runId,
+            });
+            const artifacts = artifactsResponse.data.artifacts ?? [];
+            const artifactsLine =
+              artifacts.length === 0
+                ? "- Artifacts: none"
+                : `- Artifacts: ${artifacts
+                    .map(
+                      (artifact) =>
+                        `[${artifact.name}](${runUrl}/artifacts/${artifact.id})`,
+                    )
+                    .join(" | ")}`;
             const summary = [
               header,
               "",
               `- Lint: ${results.lint}`,
               `- Unit tests: ${results.unit}`,
               `- E2E tests: ${results.e2e}`,
-              `- Artifacts: [unit-coverage](${artifactsUrl}) | [e2e-coverage](${artifactsUrl})`,
+              artifactsLine,
               `- Run: ${runUrl}`,
             ].join("\n");
 
