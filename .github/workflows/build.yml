@@ -19,6 +19,9 @@ jobs:
       LOG_LEVEL: info
       NODE_ENV: test
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
       - name: Setup Node and install deps
         uses: ./.github/actions/setup-node
 
@@ -31,6 +34,9 @@ jobs:
     env:
       NODE_ENV: production
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
       - name: Setup Node and install deps
         uses: ./.github/actions/setup-node
 
