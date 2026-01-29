@@ -6,10 +6,10 @@ import type { Database } from "../db/database.types.ts";
 
 export type SupabaseClient = SupabaseClientBase<Database>;
 
-type SupabaseEnv = {
+interface SupabaseEnv {
   SUPABASE_URL?: string;
   SUPABASE_KEY?: string;
-};
+}
 
 function resolveSupabaseConfig(env?: SupabaseEnv): { supabaseUrl: string; supabaseAnonKey: string } {
   const processEnv = typeof process !== "undefined" ? process.env : undefined;
