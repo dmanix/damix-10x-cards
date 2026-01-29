@@ -1,0 +1,10 @@
+---
+description: Ensure lint errors are caught
+alwaysApply: true
+---
+
+# Lint Verification
+
+- After substantive code edits, run `npm run lint` (not only IDE diagnostics).
+- Report any lint errors and fix them when feasible.
+- Mention if lint cannot be run (e.g., missing dependencies).
