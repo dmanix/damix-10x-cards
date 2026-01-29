@@ -287,7 +287,7 @@ The product requirements document defines a clear MVP scope and explicitly calls
 
 ## Project status
 
-- **Version**: `0.0.1`.
+- **Version**: `0.0.2`.
 - **Stage**: Early development / MVP implementation in progress.
 - The repository already includes a detailed product requirements document and a defined tech stack, but not all features described there may be implemented yet.
 - Expect the domain model, Supabase schema, AI prompt design, and SRS integration details to evolve as the MVP is built and validated against the defined success metrics (AI card acceptance rate and AI utilization rate).
