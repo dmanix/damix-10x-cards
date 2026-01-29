@@ -32,7 +32,7 @@ function json(status: number, data: unknown): Response {
   });
 }
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const contentType = request.headers.get("content-type") ?? "";
   const accept = request.headers.get("accept") ?? "";
   const isHtmlFormPost =
@@ -58,7 +58,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   }
 
-  const supabase = createSupabaseServerInstance({ cookies, headers: request.headers });
+  const supabase = createSupabaseServerInstance({
+    cookies,
+    headers: request.headers,
+    env: locals.runtime?.env,
+  });
   const { error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,

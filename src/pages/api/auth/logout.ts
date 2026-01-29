@@ -13,14 +13,18 @@ function json(status: number, data: unknown): Response {
   });
 }
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const contentType = request.headers.get("content-type") ?? "";
   const accept = request.headers.get("accept") ?? "";
   const isHtmlFormPost =
     accept.includes("text/html") &&
     (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data"));
 
-  const supabase = createSupabaseServerInstance({ cookies, headers: request.headers });
+  const supabase = createSupabaseServerInstance({
+    cookies,
+    headers: request.headers,
+    env: locals.runtime?.env,
+  });
   const { error } = await supabase.auth.signOut();
 
   if (error) {

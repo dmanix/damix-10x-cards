@@ -1,8 +1,0 @@
-name = "damix-10x-cards"
-compatibility_date = "2026-01-29"
-pages_build_output_dir = "dist"
-
-[vars]
-LOG_LEVEL=info
-LOG_OUTPUT=both
-LOG_FILE_PATH=./logs/apps.log

@@ -6,10 +6,23 @@ import type { Database } from "../db/database.types.ts";
 
 export type SupabaseClient = SupabaseClientBase<Database>;
 
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+type SupabaseEnv = {
+  SUPABASE_URL?: string;
+  SUPABASE_KEY?: string;
+};
 
-export const supabaseClient: SupabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+function resolveSupabaseConfig(env?: SupabaseEnv): { supabaseUrl: string; supabaseAnonKey: string } {
+  const processEnv = typeof process !== "undefined" ? process.env : undefined;
+  const supabaseUrl = env?.SUPABASE_URL ?? import.meta.env.SUPABASE_URL ?? processEnv?.SUPABASE_URL;
+  const supabaseAnonKey = env?.SUPABASE_KEY ?? import.meta.env.SUPABASE_KEY ?? processEnv?.SUPABASE_KEY;
+
+  return { supabaseUrl, supabaseAnonKey };
+}
+
+export function createSupabaseClient(env?: SupabaseEnv): SupabaseClient {
+  const { supabaseUrl, supabaseAnonKey } = resolveSupabaseConfig(env);
+  return createClient<Database>(supabaseUrl, supabaseAnonKey);
+}
 
 export const cookieOptions: CookieOptionsWithName = {
   path: "/",
@@ -27,7 +40,13 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
   });
 }
 
-export function createSupabaseServerInstance(context: { headers: Headers; cookies: AstroCookies }): SupabaseClient {
+export function createSupabaseServerInstance(context: {
+  headers: Headers;
+  cookies: AstroCookies;
+  env?: SupabaseEnv;
+}): SupabaseClient {
+  const { supabaseUrl, supabaseAnonKey } = resolveSupabaseConfig(context.env);
+
   return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookieOptions,
     cookies: {
