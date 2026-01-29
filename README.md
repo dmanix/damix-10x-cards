@@ -97,7 +97,7 @@ The app is aimed at students, pupils, and self‑taught learners who want to ben
 **CI/CD & hosting**
 
 - **CI/CD**: GitHub Actions for continuous integration and delivery pipelines (workflows can run tests, linters, and builds on each push/PR).
-- **Hosting**: DigitalOcean, typically via a Docker image built from the Astro Node adapter.
+- **Hosting**: Cloudflare Pages, using the Cloudflare adapter.
 
 ---
 

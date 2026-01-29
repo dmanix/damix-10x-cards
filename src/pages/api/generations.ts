@@ -69,7 +69,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // Initialize OpenRouter service if API key is available
   let openRouterService: OpenRouterService | undefined;
   const apiKey = import.meta.env.OPENROUTER_API_KEY;
-  const defaultModel = import.meta.env.OPENROUTER_DEFAULT_MODEL ?? "openai/gpt-4o-mini";
+  const defaultModel = import.meta.env.OPENROUTER_DEFAULT_MODEL ?? "x-ai/grok-4-fast";
 
   if (apiKey) {
     try {
