@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-
 export type LogLevel = "debug" | "info" | "warn" | "error" | "silent";
 export type LogDestination = "console" | "file" | "both" | "none";
 
@@ -30,9 +27,19 @@ const normalizeDestination = (value?: string): LogDestination => {
   return "console";
 };
 
-const createFileStream = (filePath: string): fs.WriteStream => {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  return fs.createWriteStream(filePath, { flags: "a", encoding: "utf8" });
+const isNodeRuntime = typeof process !== "undefined" && Boolean(process.versions?.node);
+
+const openFileStream = async (filePath: string) => {
+  if (!isNodeRuntime) return null;
+  try {
+    const [fsModule, pathModule] = await Promise.all([import("node:fs"), import("node:path")]);
+    fsModule.mkdirSync(pathModule.dirname(filePath), { recursive: true });
+    return fsModule.createWriteStream(filePath, { flags: "a", encoding: "utf8" });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Failed to open log file stream:", error);
+    return null;
+  }
 };
 
 export interface Logger {
@@ -55,31 +62,32 @@ export const createLogger = (options?: {
   filePath?: string;
 }): Logger => {
   const level = options?.level ?? normalizeLevel(readEnv("LOG_LEVEL"));
-  const destination = options?.destination ?? normalizeDestination(readEnv("LOG_OUTPUT"));
+  const requestedDestination = options?.destination ?? normalizeDestination(readEnv("LOG_OUTPUT"));
   const filePath = options?.filePath ?? readEnv("LOG_FILE_PATH") ?? "./logs/app.log";
+  const destination =
+    !isNodeRuntime && (requestedDestination === "file" || requestedDestination === "both")
+      ? "console"
+      : requestedDestination;
 
   const threshold = LEVEL_ORDER[level];
   const canLog = (value: LogLevel): boolean => LEVEL_ORDER[value] >= threshold;
 
-  let fileStream: fs.WriteStream | null = null;
-  if (destination === "file" || destination === "both") {
-    try {
-      fileStream = createFileStream(filePath);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Failed to open log file stream:", error);
-      fileStream = null;
-    }
-  }
+  let fileStreamPromise: ReturnType<typeof openFileStream> | null = null;
 
   const writeToFile = (payload: Record<string, unknown>) => {
-    if (!fileStream) return;
-    try {
-      fileStream.write(JSON.stringify(payload) + "\n");
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Failed to write log line to file:", error);
+    if (destination !== "file" && destination !== "both") return;
+    if (!fileStreamPromise) {
+      fileStreamPromise = openFileStream(filePath);
     }
+    void fileStreamPromise.then((fileStream) => {
+      if (!fileStream) return;
+      try {
+        fileStream.write(JSON.stringify(payload) + "\n");
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to write log line to file:", error);
+      }
+    });
   };
 
   const log = (

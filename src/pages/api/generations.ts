@@ -113,7 +113,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const inputSnapshot = service.buildInputSnapshot(parsed.data.text);
+  const inputSnapshot = await service.buildInputSnapshot(parsed.data.text);
   try {
     service.ensureInputLength(inputSnapshot);
   } catch (error) {

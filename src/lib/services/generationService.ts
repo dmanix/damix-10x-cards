@@ -1,5 +1,3 @@
-import { createHash } from "crypto";
-
 import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { Tables, TablesInsert } from "../../db/database.types.ts";
 import { nextUtcMidnight, utcStartOfDay } from "../dates.ts";
@@ -70,7 +68,25 @@ export const MIN_INPUT_LENGTH = 1000;
 export const MAX_INPUT_LENGTH = 20000;
 const DAILY_LIMIT_KEY = "daily_generation_limit";
 
-const hashInput = (value: string): string => createHash("sha256").update(value, "utf8").digest("hex");
+const hexFromBuffer = (buffer: ArrayBuffer): string =>
+  Array.from(new Uint8Array(buffer))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+
+const getSubtleCrypto = async (): Promise<SubtleCrypto> => {
+  if (globalThis.crypto?.subtle) return globalThis.crypto.subtle;
+  const nodeCrypto = await import("node:crypto");
+  if (nodeCrypto.webcrypto?.subtle) return nodeCrypto.webcrypto.subtle;
+  throw new Error("Web Crypto API is not available.");
+};
+
+const hashInput = async (value: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(value);
+  const subtle = await getSubtleCrypto();
+  const digest = await subtle.digest("SHA-256", data);
+  return hexFromBuffer(digest);
+};
 
 export class GenerationService {
   constructor(
@@ -79,8 +95,8 @@ export class GenerationService {
     private readonly openRouterService?: OpenRouterService
   ) {}
 
-  buildInputSnapshot(raw: string): InputSnapshot {
-    return { text: raw, length: raw.length, hash: hashInput(raw) };
+  async buildInputSnapshot(raw: string): Promise<InputSnapshot> {
+    return { text: raw, length: raw.length, hash: await hashInput(raw) };
   }
 
   ensureInputLength(input: InputSnapshot): void {
@@ -154,7 +170,7 @@ export class GenerationService {
   async insertPendingGeneration(
     params: Pick<GenerationInsert, "user_id" | "input_hash" | "input_length">
   ): Promise<Pick<GenerationRow, "id" | "status" | "created_at">> {
-    const input_hash_hex = createHash("sha256").update(params.input_hash, "utf8").digest("hex");
+    const input_hash_hex = await hashInput(params.input_hash);
     params.input_hash = `\\x${input_hash_hex}`;
     await this.assertWithinDailyLimit(params.user_id);
     const { data, error } = await this.supabase
