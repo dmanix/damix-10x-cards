@@ -324,6 +324,8 @@ export class GenerationService {
   async runGenerationProvider(input: InputSnapshot): Promise<ProviderResult> {
     // Guard clause: require OpenRouterService
     if (!this.openRouterService) {
+      // eslint-disable-next-line no-console
+      console.info("OpenRouterService is not configured. Cannot generate proposals.");
       throw new Error("OpenRouterService is not configured. Cannot generate proposals.");
     }
 
@@ -460,6 +462,14 @@ export class GenerationService {
         back: "Discriminated union to wzorzec używający wspólnej dyskryminującej właściwości (literal type) do wąskiego typowania w union types. Przykład: type Shape = {kind: 'circle', r: number} | {kind: 'square', side: number}.",
       },
     ];
+
+    logger.info({
+      event: "generation.mock.success",
+      model: "mock",
+      params: null,
+      inputLength: input.length,
+      generatedCount: proposals.length,
+    });
 
     return { type: "success", proposals };
   }

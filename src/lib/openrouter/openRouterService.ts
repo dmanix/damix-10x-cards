@@ -32,6 +32,9 @@ export class OpenRouterService {
   public readonly timeoutMs: number;
 
   constructor(config: OpenRouterConfig, fetchImpl: typeof fetch = fetch) {
+    // eslint-disable-next-line no-console
+    console.error("OpenRouter key exists:", Boolean(config.apiKey && config.apiKey.trim().length > 0));
+
     // Validate configuration with guard clauses
     if (!config.apiKey || config.apiKey.trim().length === 0) {
       throw new OpenRouterConfigError("OPENROUTER_API_KEY is required and cannot be empty.");
