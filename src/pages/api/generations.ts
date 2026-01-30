@@ -150,7 +150,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     // eslint-disable-next-line no-console
-    console.error("OpenRouter key:", Boolean(openRouterService));
+    console.error("OpenRouter service exists:", Boolean(openRouterService));
 
     // Use real provider if OpenRouter is configured, otherwise fallback to mock
     const providerResult = openRouterService

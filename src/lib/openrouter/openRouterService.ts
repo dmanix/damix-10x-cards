@@ -48,7 +48,7 @@ export class OpenRouterService {
     this.baseUrl = config.baseUrl ?? "https://openrouter.ai/api/v1";
     this.defaultModel = config.defaultModel;
     this.timeoutMs = config.timeoutMs ?? 30000;
-    this.fetchImpl = fetchImpl;
+    this.fetchImpl = fetchImpl.bind(globalThis);
 
     // Build base headers
     this.headersBase = this.buildHeaders(config.appName, config.appUrl);
