@@ -324,8 +324,6 @@ export class GenerationService {
   async runGenerationProvider(input: InputSnapshot): Promise<ProviderResult> {
     // Guard clause: require OpenRouterService
     if (!this.openRouterService) {
-      // eslint-disable-next-line no-console
-      console.info("OpenRouterService is not configured. Cannot generate proposals.");
       throw new Error("OpenRouterService is not configured. Cannot generate proposals.");
     }
 

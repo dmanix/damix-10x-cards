@@ -140,8 +140,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     throw error;
   }
 
-  logger.debug({ message: "Generate CALLED" });
-
   const pending = await service.insertPendingGeneration({
     user_id: userId,
     input_hash: inputSnapshot.hash,
@@ -149,9 +147,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   });
 
   try {
-    // eslint-disable-next-line no-console
-    console.error("OpenRouter service exists:", Boolean(openRouterService));
-
     // Use real provider if OpenRouter is configured, otherwise fallback to mock
     const providerResult = openRouterService
       ? await service.runGenerationProvider(inputSnapshot)

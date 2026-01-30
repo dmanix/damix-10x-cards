@@ -149,9 +149,6 @@ export class FlashcardService {
       throw new Error(`Failed to list flashcards: ${error.message}`);
     }
 
-    // eslint-disable-next-line no-console
-    console.debug(" Found ", count, " items in DB");
-
     return {
       items: (data ?? []).map((row) => toFlashcardDto(row as FlashcardRow)),
       page,
