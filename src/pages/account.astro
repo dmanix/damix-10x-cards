@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { AccountView } from "../components/account/AccountView";
+
+const { user } = Astro.locals;
+---
+
+<Layout title="Konto | 10x Cards">
+  <AccountView client:load email={user?.email ?? null} />
+</Layout>

@@ -3,7 +3,14 @@ import { defineMiddleware } from "astro:middleware";
 import { createSupabaseServerInstance } from "../db/supabase.client.ts";
 import { buildLoginRedirectPath, sanitizeReturnTo } from "../lib/auth/returnTo.ts";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/generate", "/flashcards", "/api/flashcards", "/api/generations"] as const;
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/generate",
+  "/flashcards",
+  "/account",
+  "/api/flashcards",
+  "/api/generations",
+] as const;
 const PUBLIC_API_PREFIXES = ["/api/auth/"] as const;
 const GUEST_ONLY_PATHS = new Set<string>(["/auth/login"]);
 
