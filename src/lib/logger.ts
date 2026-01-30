@@ -28,14 +28,21 @@ const normalizeDestination = (value?: string): LogDestination => {
 };
 
 const isNodeRuntime = typeof process !== "undefined" && Boolean(process.versions?.node);
+const isCloudflareRuntime =
+  typeof navigator !== "undefined" &&
+  typeof navigator.userAgent === "string" &&
+  navigator.userAgent.includes("Cloudflare-Workers");
 
 const openFileStream = async (filePath: string) => {
-  if (!isNodeRuntime) return null;
+  if (!isNodeRuntime || isCloudflareRuntime) return null;
   try {
     const [fsModule, pathModule] = await Promise.all([import("node:fs"), import("node:path")]);
     fsModule.mkdirSync(pathModule.dirname(filePath), { recursive: true });
     return fsModule.createWriteStream(filePath, { flags: "a", encoding: "utf8" });
   } catch (error) {
+    if (error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "EPERM") {
+      return null;
+    }
     // eslint-disable-next-line no-console
     console.error("Failed to open log file stream:", error);
     return null;
@@ -65,7 +72,7 @@ export const createLogger = (options?: {
   const requestedDestination = options?.destination ?? normalizeDestination(readEnv("LOG_OUTPUT"));
   const filePath = options?.filePath ?? readEnv("LOG_FILE_PATH") ?? "./logs/app.log";
   const destination =
-    !isNodeRuntime && (requestedDestination === "file" || requestedDestination === "both")
+    (!isNodeRuntime || isCloudflareRuntime) && (requestedDestination === "file" || requestedDestination === "both")
       ? "console"
       : requestedDestination;
 

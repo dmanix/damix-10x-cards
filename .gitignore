@@ -36,3 +36,6 @@ screenshots/
 
 # vitest
 .vitest/
+
+# wrangler
+.wrangler/

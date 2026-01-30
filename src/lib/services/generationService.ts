@@ -461,6 +461,14 @@ export class GenerationService {
       },
     ];
 
+    logger.info({
+      event: "generation.mock.success",
+      model: "mock",
+      params: null,
+      inputLength: input.length,
+      generatedCount: proposals.length,
+    });
+
     return { type: "success", proposals };
   }
 
