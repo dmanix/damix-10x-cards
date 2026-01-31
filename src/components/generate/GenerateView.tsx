@@ -252,7 +252,7 @@ export default function GenerateView({ initialText = "" }: GenerateViewProps) {
   }, [generationSession, handleGenerate]);
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background">
       {/* Blocking Overlay */}
       <BlockingOverlay
         open={isGenerating || isSaving}
@@ -267,7 +267,7 @@ export default function GenerateView({ initialText = "" }: GenerateViewProps) {
         {error && `Błąd: ${error.message}`}
       </div>
 
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="container mx-auto px-4 py-8 space-y-6">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">Generuj fiszki</h1>
           <p className="text-muted-foreground">

@@ -12,7 +12,7 @@ interface FlashcardCardProps {
 
 export function FlashcardCard({ item, isEditing = false, onStartEdit, onRequestDelete }: FlashcardCardProps) {
   return (
-    <Card>
+    <Card className="h-[360px] flex flex-col">
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <FlashcardSourceBadge source={item.source} />
@@ -20,7 +20,7 @@ export function FlashcardCard({ item, isEditing = false, onStartEdit, onRequestD
         </div>
         <p className="text-xs text-muted-foreground">Aktualizacja: {item.updatedAtLabel}</p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-1 overflow-y-auto min-h-0">
         <div className="space-y-3">
           <div>
             <p className="text-sm font-medium">Przód</p>
@@ -36,7 +36,7 @@ export function FlashcardCard({ item, isEditing = false, onStartEdit, onRequestD
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-wrap gap-2">
+      <CardFooter className="flex flex-wrap gap-2 mt-auto">
         <Button type="button" variant="outline" onClick={() => onStartEdit(item.id)} disabled={isEditing}>
           Edytuj
         </Button>

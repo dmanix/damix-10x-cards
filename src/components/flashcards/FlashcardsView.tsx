@@ -171,10 +171,10 @@ export function FlashcardsView() {
   );
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">Moja kolekcja</h1>
-        <p className="text-sm text-muted-foreground">
+    <main className="container mx-auto px-4 py-8">
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">Moja kolekcja</h1>
+        <p className="text-muted-foreground mt-2">
           Przeglądaj i zarządzaj zapisanymi fiszkami. Filtruj, sortuj i aktualizuj swoją kolekcję.
         </p>
       </header>

@@ -7,5 +7,10 @@ const error = Astro.url.searchParams.get("error");
 ---
 
 <AuthLayout title="Rejestracja | Damix 10x Cards">
-  <RegisterForm returnTo={returnTo} initialError={error} client:load />
+  <div class="space-y-6">
+    <header class="text-center">
+      <h1 class="text-2xl font-bold">Witaj w 10x Cards!</h1>
+    </header>
+    <RegisterForm returnTo={returnTo} initialError={error} client:load />
+  </div>
 </AuthLayout>
