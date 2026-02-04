@@ -1,3 +1,20 @@
+/**
+ * @fileoverview Generation service for AI-powered flashcard creation.
+ *
+ * This module provides the core business logic for flashcard generation,
+ * including input validation, daily usage limits, AI provider integration,
+ * and database operations for tracking generation history.
+ *
+ * @module generationService
+ *
+ * @dependencies
+ * - Supabase client for database operations
+ * - OpenRouter service for AI flashcard generation
+ * - Date utilities for UTC time handling
+ * - Validation schemas for OpenRouter requests/responses
+ * - Logger for structured event logging
+ */
+
 import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { Tables, TablesInsert } from "../../db/database.types.ts";
 import { nextUtcMidnight, utcStartOfDay } from "../dates.ts";
@@ -17,25 +34,71 @@ import {
 } from "../validation/openrouter.ts";
 import { logger } from "../logger.ts";
 
+/**
+ * Type alias for the generations table row from database schema.
+ * @typedef {Tables<"generations">} GenerationRow
+ */
 type GenerationRow = Tables<"generations">;
+
+/**
+ * Type alias for the generations table insert type from database schema.
+ * @typedef {TablesInsert<"generations">} GenerationInsert
+ */
 type GenerationInsert = TablesInsert<"generations">;
 
+/**
+ * Represents a snapshot of user input text with computed metadata.
+ *
+ * This interface captures the original text, its length, and a SHA-256 hash
+ * for deduplication and integrity verification purposes.
+ */
 export interface InputSnapshot {
+  /** The original input text provided by the user. */
   text: string;
+  /** The character length of the input text. */
   length: number;
+  /** SHA-256 hash of the input text for deduplication. */
   hash: string;
 }
 
+/**
+ * Represents the current daily usage statistics for flashcard generation.
+ *
+ * Tracks the user's daily limit, current usage, and when the limit resets.
+ */
 export interface DailyUsage {
+  /** The maximum number of generations allowed per day. */
   limit: number;
+  /** The number of generations already used today. */
   used: number;
+  /** The number of generations remaining for today. */
   remaining: number;
+  /** ISO 8601 timestamp when the daily limit resets (UTC midnight). */
   resetsAtUtc: string;
 }
 
+/**
+ * Result type for flashcard generation providers.
+ *
+ * Discriminated union that represents either successful generation
+ * with proposals or low-quality input detection.
+ */
 export type ProviderResult = { type: "success"; proposals: ProposalDto[] } | { type: "low_quality"; message: string };
 
+/**
+ * Error thrown when input text length is outside acceptable bounds.
+ *
+ * This error occurs when the input text is either too short or too long
+ * for effective flashcard generation.
+ */
 export class InputLengthError extends Error {
+  /**
+   * Creates an InputLengthError with validation details.
+   *
+   * @param length - The actual length of the input text
+   * @param min - The minimum required length
+   * @param max - The maximum allowed length
+   */
   constructor(
     public readonly length: number,
     public readonly min: number,
@@ -46,7 +109,19 @@ export class InputLengthError extends Error {
   }
 }
 
+/**
+ * Error thrown when the user has exceeded their daily generation limit.
+ *
+ * This prevents abuse and ensures fair usage of the AI generation service.
+ */
 export class DailyLimitExceededError extends Error {
+  /**
+   * Creates a DailyLimitExceededError with usage details.
+   *
+   * @param limit - The daily limit for the user
+   * @param remaining - Remaining generations (will be 0 or negative)
+   * @param resetsAtUtc - ISO 8601 timestamp when the limit resets
+   */
   constructor(
     public readonly limit: number,
     public readonly remaining: number,
@@ -57,22 +132,59 @@ export class DailyLimitExceededError extends Error {
   }
 }
 
+/**
+ * Error thrown when the AI provider detects low-quality input text.
+ *
+ * This indicates that the input text does not contain enough useful
+ * information to generate meaningful flashcards.
+ */
 export class LowQualityInputError extends Error {
+  /**
+   * Creates a LowQualityInputError with the reason for rejection.
+   *
+   * @param reason - Human-readable explanation of why the input was rejected
+   */
   constructor(public readonly reason: string) {
     super("Low quality input detected by provider.");
     this.name = "LowQualityInputError";
   }
 }
 
+/**
+ * Minimum input length required for flashcard generation.
+ * Input text must be at least this many characters long.
+ */
 export const MIN_INPUT_LENGTH = 1000;
+
+/**
+ * Maximum input length allowed for flashcard generation.
+ * Input text cannot exceed this many characters.
+ */
 export const MAX_INPUT_LENGTH = 20000;
+
+/** Database key for storing the daily generation limit configuration. */
 const DAILY_LIMIT_KEY = "daily_generation_limit";
 
+/**
+ * Converts an ArrayBuffer to a hexadecimal string representation.
+ *
+ * @param buffer - The ArrayBuffer to convert
+ * @returns Hexadecimal string representation
+ * @private
+ */
 const hexFromBuffer = (buffer: ArrayBuffer): string =>
   Array.from(new Uint8Array(buffer))
     .map((value) => value.toString(16).padStart(2, "0"))
     .join("");
 
+/**
+ * Gets a SubtleCrypto instance for cryptographic operations.
+ * Supports both browser and Node.js environments.
+ *
+ * @returns Promise resolving to SubtleCrypto instance
+ * @throws Error if Web Crypto API is not available
+ * @private
+ */
 const getSubtleCrypto = async (): Promise<SubtleCrypto> => {
   if (globalThis.crypto?.subtle) return globalThis.crypto.subtle;
   const nodeCrypto = await import("node:crypto");
@@ -80,6 +192,13 @@ const getSubtleCrypto = async (): Promise<SubtleCrypto> => {
   throw new Error("Web Crypto API is not available.");
 };
 
+/**
+ * Computes SHA-256 hash of the input string.
+ *
+ * @param value - String to hash
+ * @returns Promise resolving to hex-encoded SHA-256 hash
+ * @private
+ */
 const hashInput = async (value: string): Promise<string> => {
   const encoder = new TextEncoder();
   const data = encoder.encode(value);
@@ -88,23 +207,74 @@ const hashInput = async (value: string): Promise<string> => {
   return hexFromBuffer(digest);
 };
 
+/**
+ * Service class for managing AI-powered flashcard generation.
+ *
+ * This service orchestrates the entire flashcard generation workflow:
+ * - Input validation and preprocessing
+ * - Daily usage limit enforcement
+ * - AI provider integration (OpenRouter)
+ * - Database persistence of generation records
+ * - Error handling and logging
+ *
+ * The service supports both production AI generation and mock generation for testing.
+ *
+ * @example
+ * ```typescript
+ * const service = new GenerationService(supabaseClient, () => new Date(), openRouterService);
+ * const input = await service.buildInputSnapshot("Some long text...");
+ * service.ensureInputLength(input);
+ * const result = await service.runGenerationProvider(input);
+ * ```
+ */
 export class GenerationService {
+  /**
+   * Creates a new GenerationService instance.
+   *
+   * @param supabase - Supabase client for database operations
+   * @param now - Function returning current date/time (defaults to Date constructor, injectable for testing)
+   * @param openRouterService - Optional OpenRouter service for AI generation (required for production use)
+   */
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly now: () => Date = () => new Date(),
     private readonly openRouterService?: OpenRouterService
   ) {}
 
+  /**
+   * Creates an InputSnapshot from raw user input text.
+   *
+   * Computes the text length and SHA-256 hash for deduplication and validation.
+   * This method is synchronous in interface but internally uses async crypto operations.
+   *
+   * @param raw - The raw input text provided by the user
+   * @returns Promise resolving to InputSnapshot with computed metadata
+   * @throws Error if crypto operations fail (extremely rare)
+   */
   async buildInputSnapshot(raw: string): Promise<InputSnapshot> {
     return { text: raw, length: raw.length, hash: await hashInput(raw) };
   }
 
+  /**
+   * Validates that input text length is within acceptable bounds.
+   *
+   * @param input - InputSnapshot to validate
+   * @throws {InputLengthError} If length is outside bounds (MIN_INPUT_LENGTH to MAX_INPUT_LENGTH)
+   */
   ensureInputLength(input: InputSnapshot): void {
     if (input.length < MIN_INPUT_LENGTH || input.length > MAX_INPUT_LENGTH) {
       throw new InputLengthError(input.length, MIN_INPUT_LENGTH, MAX_INPUT_LENGTH);
     }
   }
 
+  /**
+   * Retrieves the current daily generation limit from application configuration.
+   *
+   * Reads the limit from the app_config table using the DAILY_LIMIT_KEY.
+   *
+   * @returns Promise resolving to the daily limit number
+   * @throws Error if configuration cannot be read or is invalid
+   */
   async fetchDailyGenerationLimit(): Promise<number> {
     const { data, error } = await this.supabase.from("app_config").select("value").eq("key", DAILY_LIMIT_KEY).single();
 
@@ -125,6 +295,14 @@ export class GenerationService {
     return limit;
   }
 
+  /**
+   * Counts successful generations for a user within the current UTC day.
+   *
+   * @param userId - The user ID to count generations for
+   * @param now - Current date/time (defaults to service's now function)
+   * @returns Promise resolving to count of successful generations today
+   * @throws Error if database query fails
+   */
   async countTodaySucceededGenerations(userId: string, now: Date = this.now()): Promise<number> {
     const startIso = utcStartOfDay(now);
 
@@ -142,6 +320,15 @@ export class GenerationService {
     return count ?? 0;
   }
 
+  /**
+   * Retrieves the current daily usage statistics for a user.
+   *
+   * Combines the daily limit with today's usage count to calculate remaining quota.
+   *
+   * @param userId - The user ID to get usage statistics for
+   * @param now - Current date/time (defaults to service's now function)
+   * @returns Promise resolving to DailyUsage object with limit, used, remaining, and reset time
+   */
   async getDailyUsage(userId: string, now: Date = this.now()): Promise<DailyUsage> {
     const [limit, used] = await Promise.all([
       this.fetchDailyGenerationLimit(),
@@ -158,6 +345,14 @@ export class GenerationService {
     };
   }
 
+  /**
+   * Asserts that the user is within their daily generation limit.
+   *
+   * @param userId - The user ID to check
+   * @param now - Current date/time (defaults to service's now function)
+   * @returns Promise resolving to DailyUsage if within limit
+   * @throws {DailyLimitExceededError} If the user has exceeded their daily limit
+   */
   async assertWithinDailyLimit(userId: string, now: Date = this.now()): Promise<DailyUsage> {
     const usage = await this.getDailyUsage(userId, now);
     if (usage.remaining <= 0) {
@@ -167,6 +362,18 @@ export class GenerationService {
     return usage;
   }
 
+  /**
+   * Creates a new pending generation record in the database.
+   *
+   * This method also enforces daily limits and hashes the input for storage.
+   * The generation record is created with 'pending' status and will be updated
+   * when the generation completes or fails.
+   *
+   * @param params - Generation parameters (user_id, input_hash, input_length)
+   * @returns Promise resolving to the created generation record (id, status, created_at)
+   * @throws {DailyLimitExceededError} If the user has exceeded their daily limit
+   * @throws Error if database insertion fails
+   */
   async insertPendingGeneration(
     params: Pick<GenerationInsert, "user_id" | "input_hash" | "input_length">
   ): Promise<Pick<GenerationRow, "id" | "status" | "created_at">> {
@@ -191,6 +398,14 @@ export class GenerationService {
 
   /**
    * Returns a paginated list of generations for the authenticated user.
+   *
+   * Supports filtering by status, sorting by creation or finish time,
+   * and pagination with configurable page size.
+   *
+   * @param userId - The user ID to fetch generations for (ownership check)
+   * @param query - Query parameters for filtering, sorting, and pagination
+   * @returns Promise resolving to paginated generation list with metadata
+   * @throws Error if database query fails
    */
   async listGenerations(
     userId: string,
@@ -248,6 +463,13 @@ export class GenerationService {
 
   /**
    * Returns details for a single generation owned by the user.
+   *
+   * Performs ownership validation to ensure users can only access their own generations.
+   *
+   * @param userId - The user ID for ownership validation
+   * @param id - The generation ID to retrieve
+   * @returns Promise resolving to GenerationDto if found and owned by user, null otherwise
+   * @throws Error if database query fails
    */
   async getGenerationById(userId: string, id: GenerationRow["id"]): Promise<GenerationDto | null> {
     const { data, error } = await this.supabase
@@ -282,6 +504,17 @@ export class GenerationService {
     };
   }
 
+  /**
+   * Marks a generation record as failed with error details.
+   *
+   * Updates the generation status to 'failed', sets error information,
+   * and records the finish timestamp.
+   *
+   * @param id - The generation ID to mark as failed
+   * @param errorCode - Error code identifier
+   * @param errorMessage - Human-readable error message
+   * @throws Error if database update fails
+   */
   async markGenerationFailed(
     id: GenerationRow["id"],
     errorCode: GenerationRow["error_code"],
@@ -302,6 +535,16 @@ export class GenerationService {
     }
   }
 
+  /**
+   * Marks a generation record as successfully completed.
+   *
+   * Updates the generation status to 'succeeded', records the number of
+   * flashcards generated, and sets the finish timestamp.
+   *
+   * @param id - The generation ID to mark as succeeded
+   * @param generatedCount - Number of flashcards that were generated
+   * @throws Error if database update fails
+   */
   async markGenerationSucceeded(id: GenerationRow["id"], generatedCount: number): Promise<void> {
     const { error } = await this.supabase
       .from("generations")
@@ -319,7 +562,14 @@ export class GenerationService {
 
   /**
    * Generates flashcard proposals using OpenRouter AI service.
-   * This is the production implementation.
+   *
+   * This is the production implementation that calls the OpenRouter API
+   * to generate flashcards from the input text. Uses structured output
+   * validation and handles various error conditions.
+   *
+   * @param input - InputSnapshot containing the text to generate flashcards from
+   * @returns Promise resolving to ProviderResult with success proposals or low_quality message
+   * @throws Error if OpenRouter service is not configured or various API errors occur
    */
   async runGenerationProvider(input: InputSnapshot): Promise<ProviderResult> {
     // Guard clause: require OpenRouterService
@@ -428,7 +678,13 @@ export class GenerationService {
 
   /**
    * Mock generation provider for testing and development.
-   * Returns hardcoded flashcard proposals.
+   *
+   * Returns hardcoded flashcard proposals instead of calling AI services.
+   * Useful for testing the generation pipeline without API calls or costs.
+   * May return low_quality result for inputs below a minimum threshold.
+   *
+   * @param input - InputSnapshot containing the text (used for length validation)
+   * @returns Promise resolving to ProviderResult with mock proposals or low_quality message
    */
   async runMockGenerationProvider(input: InputSnapshot): Promise<ProviderResult> {
     if (input.length < MIN_INPUT_LENGTH + 200) {
@@ -472,6 +728,12 @@ export class GenerationService {
     return { type: "success", proposals };
   }
 
+  /**
+   * Converts DailyUsage to the DTO format for API responses.
+   *
+   * @param usage - Internal DailyUsage object
+   * @returns DailyLimitDto suitable for API responses
+   */
   buildDailyLimitDto(usage: DailyUsage): DailyLimitDto {
     return {
       limit: usage.limit,
@@ -480,6 +742,13 @@ export class GenerationService {
     };
   }
 
+  /**
+   * Calculates the UTC timestamp when the daily limit resets.
+   *
+   * @param now - Current date/time (defaults to service's now function)
+   * @returns ISO 8601 timestamp string for the next UTC midnight
+   * @private
+   */
   private getResetsAtUtc(now: Date = this.now()): string {
     return nextUtcMidnight(now);
   }
