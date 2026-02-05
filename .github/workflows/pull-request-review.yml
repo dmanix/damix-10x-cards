@@ -4,7 +4,12 @@ on:
   pull_request:
     branches: [master, extra]
     types: [opened, synchronize, reopened, labeled]
-
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Numer Pull Requesta do zrecenzowania'
+        required: true
+        type: string    
 jobs:
   build:
     environment:
