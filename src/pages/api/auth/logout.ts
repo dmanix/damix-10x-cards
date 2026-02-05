@@ -4,6 +4,13 @@ import { createSupabaseServerInstance } from "../../../db/supabase.client.ts";
 
 export const prerender = false;
 
+/**
+ * Creates a JSON response with the given status code and data.
+ *
+ * @param {number} status - The HTTP status code for the response.
+ * @param {unknown} data - The data to be included in the JSON response.
+ * @returns {Response} A Response object with the provided data and status code.
+ */
 function json(status: number, data: unknown): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -13,6 +20,11 @@ function json(status: number, data: unknown): Response {
   });
 }
 
+/**
+ * Logs out the user.
+ * @param {object} context - The context object containing request, cookies, and locals.
+ * @returns {Promise<Response>} A promise that resolves with a Response object.
+ */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const contentType = request.headers.get("content-type") ?? "";
   const accept = request.headers.get("accept") ?? "";

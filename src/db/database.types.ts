@@ -136,6 +136,13 @@ type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
+/**
+ * Type helper to extract table types from the Database schema.
+ *
+ * @template DefaultSchemaTableNameOrOptions - Table name or options with schema.
+ * @template TableName - Table name if options with schema are provided.
+ * @returns {any} - The row type for the specified table.
+ */
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -163,6 +170,13 @@ export type Tables<
       : never
     : never;
 
+/**
+ * Type helper to extract insert table types from the Database schema.
+ *
+ * @template DefaultSchemaTableNameOrOptions - Table name or options with schema.
+ * @template TableName - Table name if options with schema are provided.
+ * @returns {any} - The insert type for the specified table.
+ */
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
@@ -186,6 +200,13 @@ export type TablesInsert<
       : never
     : never;
 
+/**
+ * Type helper to extract update table types from the Database schema.
+ *
+ * @template DefaultSchemaTableNameOrOptions - Table name or options with schema.
+ * @template TableName - Table name if options with schema are provided.
+ * @returns {any} - The update type for the specified table.
+ */
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
@@ -209,6 +230,13 @@ export type TablesUpdate<
       : never
     : never;
 
+/**
+ * Type helper to extract enum types from the Database schema.
+ *
+ * @template DefaultSchemaEnumNameOrOptions - Enum name or options with schema.
+ * @template EnumName - Enum name if options with schema are provided.
+ * @returns {any} - The enum type for the specified enum.
+ */
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
@@ -224,6 +252,13 @@ export type Enums<
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never;
 
+/**
+ * Type helper to extract composite types from the Database schema.
+ *
+ * @template PublicCompositeTypeNameOrOptions - Composite type name or options with schema.
+ * @template CompositeTypeName - Composite type name if options with schema are provided.
+ * @returns {any} - The composite type for the specified composite type.
+ */
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]

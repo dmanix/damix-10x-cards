@@ -201,6 +201,9 @@ export interface OpenRouterConfig {
 }
 
 // Flashcards generation through OpenRouter
+/**
+ * Represents the structure for flashcard generation data.
+ */
 export interface FlashcardsGenerationDTO {
   flashcards: {
     front: string;

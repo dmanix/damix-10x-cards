@@ -55,6 +55,12 @@ export const createFlashcardsSchema = z
 
 export type CreateFlashcardsInput = z.infer<typeof createFlashcardsSchema>;
 
+/**
+ * Validates the create flashcards command payload.
+ *
+ * @param payload - The payload to validate.
+ * @returns A safe parse result containing either the parsed input or an error.
+ */
 export const validateCreateFlashcardsCommand = (
   payload: unknown
 ): z.SafeParseReturnType<CreateFlashcardsInput, CreateFlashcardsCommand> => {
@@ -101,6 +107,12 @@ export const flashcardListQuerySchema = z.object({
 
 export type FlashcardListQueryInput = z.infer<typeof flashcardListQuerySchema>;
 
+/**
+ * Validates the flashcard list query payload.
+ *
+ * @param payload - The payload to validate.
+ * @returns A safe parse result containing either the parsed input or an error.
+ */
 export const validateFlashcardListQuery = (
   payload: unknown
 ): z.SafeParseReturnType<FlashcardListQueryInput, FlashcardListQueryInput> => {
@@ -118,6 +130,12 @@ export const flashcardIdParamSchema = z.object({
 
 export type FlashcardIdParamInput = z.infer<typeof flashcardIdParamSchema>;
 
+/**
+ * Validates the flashcard ID parameter payload.
+ *
+ * @param payload - The payload to validate.
+ * @returns A safe parse result containing either the parsed input or an error.
+ */
 export const validateFlashcardIdParam = (
   payload: unknown
 ): z.SafeParseReturnType<FlashcardIdParamInput, FlashcardIdParamInput> => {

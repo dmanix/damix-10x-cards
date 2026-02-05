@@ -19,6 +19,12 @@ function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+/**
+ * Normalizes a flashcards query object.
+ *
+ * @param query - The flashcards query object to normalize.
+ * @returns The normalized flashcards query object.
+ */
 function normalizeQuery(query: FlashcardsQueryVm): FlashcardsQueryVm {
   const trimmedSearch = query.search?.trim() ?? "";
   const searchValue = trimmedSearch.length > 0 ? trimmedSearch.slice(0, 200) : undefined;
@@ -31,6 +37,11 @@ function normalizeQuery(query: FlashcardsQueryVm): FlashcardsQueryVm {
   };
 }
 
+/**
+ * Hook for managing a collection of flashcards.
+ * @param returnTo - The URL to return to after certain actions.
+ * @returns An object containing the state and actions for managing the flashcards collection.
+ */
 export function useFlashcardsCollection(returnTo = "/flashcards") {
   const [query, setQuery] = useState<FlashcardsQueryVm>(() => {
     if (typeof window === "undefined") {
@@ -61,6 +72,11 @@ export function useFlashcardsCollection(returnTo = "/flashcards") {
     setRefetchToken((token) => token + 1);
   }, []);
 
+  /**
+   * Creates a manual flashcard.
+   * @param front - The front side of the flashcard.
+   * @param back - The back side of the flashcard.
+   */
   const createManual = useCallback(
     async (front: string, back: string) => {
       setIsCreating(true);
@@ -82,6 +98,12 @@ export function useFlashcardsCollection(returnTo = "/flashcards") {
     [refetch, returnTo]
   );
 
+  /**
+   * Updates an existing flashcard.
+   * @param id - The ID of the flashcard to update.
+   * @param values - The new values for the flashcard.
+   * @returns A promise that resolves when the flashcard is updated.
+   */
   const updateItem = useCallback(
     async (id: string, values: { front: string; back: string; source: FlashcardSource }) => {
       setIsUpdatingById((prev) => ({ ...prev, [id]: true }));
@@ -104,6 +126,10 @@ export function useFlashcardsCollection(returnTo = "/flashcards") {
     [returnTo]
   );
 
+  /**
+   * Deletes a flashcard.
+   * @param id - The ID of the flashcard to delete.
+   */
   const deleteItem = useCallback(
     async (id: string) => {
       setIsDeletingById((prev) => ({ ...prev, [id]: true }));

@@ -5,12 +5,22 @@ import { logger } from "../../../lib/logger.ts";
 
 export const prerender = false;
 
+/**
+ * Creates a JSON response with the given status code and body.
+ *
+ * @param status - The HTTP status code for the response.
+ * @param body - The response body (will be serialized to JSON).
+ * @returns A Response object with the specified status and JSON body.
+ */
 const jsonResponse = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json" },
   });
 
+/**
+ * API route to get the daily usage quota for the authenticated user.
+ */
 export const GET: APIRoute = async ({ locals }) => {
   const supabase = (locals as { supabase?: SupabaseClient }).supabase;
   if (!supabase) {
