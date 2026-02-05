@@ -1,0 +1,48 @@
+name: Update JSDocs Automatically
+
+on:
+  # schedule:
+  #   # Runs daily at midnight UTC
+  #   - cron: "0 0 * * *"
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  contents: write # Needed to commit changes
+  pull-requests: write # Needed to create pull requests
+
+jobs:
+  update_docs:
+    runs-on: ubuntu-latest
+    environment:
+      name: integration
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run AI JSDoc Updater
+      id: ai_jsdoc_updater
+      uses: przeprogramowani/ai-action@sync-docs
+      with:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        FILE_EXTENSIONS: ".js,.mjs"
+        EXCLUDED_DIRS: "node_modules,.git,dist,vendor"
+
+    - name: Create Pull Request if changes were made
+      if: steps.ai_jsdoc_updater.outputs.files-updated-count > 0
+      uses: peter-evans/create-pull-request@v7
+      with:
+        #token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "chore: Update JSDocs with AI Assistant"
+        committer: GitHub <noreply@github.com>
+        author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+        branch: chore/ai-jsdoc-updates
+        delete-branch: true
+        title: "AI JSDoc Updates"
+        body: |
+          Automated JSDoc updates by the AI assistant.
+
+          **Files Updated (${{ steps.ai_jsdoc_updater.outputs.files-updated-count }}):**
+          ```
+          ${{ steps.ai_jsdoc_updater.outputs.updated-files-list }}
+          ```

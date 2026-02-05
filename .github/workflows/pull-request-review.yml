@@ -1,0 +1,26 @@
+name: Pull Request Review
+
+on:
+  pull_request:
+    branches: [master, extra]
+    types: [opened, synchronize, reopened, labeled]
+
+jobs:
+  build:
+    environment:
+      name: integration
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automated pr') }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: przeprogramowani/ai-action@git-diff
+        with:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
