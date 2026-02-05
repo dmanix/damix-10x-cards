@@ -17,6 +17,12 @@ export interface UpdateFlashcardPayload {
   source: FlashcardSource;
 }
 
+/**
+ * Maps an unknown error to a FlashcardsApiErrorVm.
+ * @param {unknown} error The error to map.
+ * @param {number} [status] The HTTP status code of the response.
+ * @returns {FlashcardsApiErrorVm} The mapped error.
+ */
 export function mapFlashcardsApiError(error: unknown, status?: number): FlashcardsApiErrorVm {
   const errorResponse = error as ErrorResponse | undefined;
   const message = errorResponse?.message;
@@ -87,6 +93,11 @@ export function mapFlashcardsApiError(error: unknown, status?: number): Flashcar
   };
 }
 
+/**
+ * Reads the error payload from a Response object.
+ * @param {Response} response The Response object to read from.
+ * @returns {Promise<ErrorResponse | undefined>} The error payload, or undefined if an error occurred.
+ */
 async function readErrorPayload(response: Response): Promise<ErrorResponse | undefined> {
   try {
     return (await response.json()) as ErrorResponse;
@@ -95,6 +106,17 @@ async function readErrorPayload(response: Response): Promise<ErrorResponse | und
   }
 }
 
+/**
+ * Fetches a resource with a timeout.
+ *
+ * @async
+ * @param {RequestInfo | URL} input - The resource to fetch.
+ * @param {RequestInit} init - The fetch options.
+ * @param {number} [timeoutMs=DEFAULT_TIMEOUT_MS] - The timeout in milliseconds.
+ * @param {AbortSignal} [signal] - An optional AbortSignal to externally control the fetch.
+ * @returns {Promise<Response>} A promise that resolves to the response from the fetch.
+ * @throws {DOMException} If the fetch is aborted due to a timeout or an external abort signal.
+ */
 export async function fetchWithTimeout(
   input: RequestInfo | URL,
   init: RequestInit,
@@ -151,6 +173,16 @@ function redirectToLogin(returnTo: string) {
   window.location.href = `/auth/login?returnTo=${encoded}`;
 }
 
+/**
+ * Retrieves flashcards based on the provided query parameters.
+ * @async
+ * @param {FlashcardsQueryVm} query - The query parameters for filtering flashcards.
+ * @param {string} [returnTo="/flashcards"] - The URL to redirect to if the user is not authorized.
+ * @param {AbortSignal} [signal] - An optional AbortSignal to cancel the request.
+ * @returns {Promise<FlashcardsListVm>} A promise that resolves to the list of flashcards.
+ * @throws {Error} If the user is not authorized.
+ * @throws {FlashcardsApiErrorVm} If there is an API error.
+ */
 export async function getFlashcards(
   query: FlashcardsQueryVm,
   returnTo = "/flashcards",
@@ -192,6 +224,16 @@ export async function getFlashcards(
   };
 }
 
+/**
+ * Creates a manual flashcard.
+ * @async
+ * @param {string} front - The front text of the flashcard.
+ * @param {string} back - The back text of the flashcard.
+ * @param {string} [returnTo="/flashcards"] - The URL to redirect to if the user is not authorized.
+ * @returns {Promise<CreateFlashcardsResponse>} A promise that resolves to the create flashcards response.
+ * @throws {Error} If the user is not authorized.
+ * @throws {FlashcardsApiErrorVm} If there is an API error.
+ */
 export async function createManualFlashcard(
   front: string,
   back: string,
@@ -239,6 +281,16 @@ export async function createManualFlashcard(
   return await response.json();
 }
 
+/**
+ * Updates a flashcard with the given ID.
+ * @async
+ * @param {string} id - The ID of the flashcard to update.
+ * @param {UpdateFlashcardPayload} payload - The data to update the flashcard with.
+ * @param {string} [returnTo="/flashcards"] - The URL to redirect to if the user is not authorized.
+ * @returns {Promise<UpdateFlashcardResponse>} A promise that resolves to the update flashcard response.
+ * @throws {Error} If the user is not authorized.
+ * @throws {FlashcardsApiErrorVm} If there is an API error.
+ */
 export async function updateFlashcard(
   id: string,
   payload: UpdateFlashcardPayload,
@@ -275,6 +327,15 @@ export async function updateFlashcard(
   return await response.json();
 }
 
+/**
+ * Deletes a flashcard with the given ID.
+ * @async
+ * @param {string} id - The ID of the flashcard to delete.
+ * @param {string} [returnTo="/flashcards"] - The URL to redirect to if the user is not authorized.
+ * @returns {Promise<void>} A promise that resolves when the flashcard is deleted.
+ * @throws {Error} If the user is not authorized.
+ * @throws {FlashcardsApiErrorVm} If there is an API error.
+ */
 export async function deleteFlashcard(id: string, returnTo = "/flashcards"): Promise<void> {
   let response: Response;
   try {

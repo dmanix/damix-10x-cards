@@ -11,6 +11,11 @@ interface SupabaseEnv {
   SUPABASE_KEY?: string;
 }
 
+/**
+ * Resolves the Supabase configuration by checking environment variables in different locations.
+ * @param {SupabaseEnv} [env] - Optional environment variables object.
+ * @returns {{supabaseUrl: string, supabaseAnonKey: string}} An object containing the Supabase URL and Anon Key.
+ */
 function resolveSupabaseConfig(env?: SupabaseEnv): { supabaseUrl: string; supabaseAnonKey: string } {
   const processEnv = typeof process !== "undefined" ? process.env : undefined;
   const supabaseUrl = env?.SUPABASE_URL ?? import.meta.env.SUPABASE_URL ?? processEnv?.SUPABASE_URL;
@@ -19,6 +24,11 @@ function resolveSupabaseConfig(env?: SupabaseEnv): { supabaseUrl: string; supaba
   return { supabaseUrl, supabaseAnonKey };
 }
 
+/**
+ * Creates a Supabase client instance.
+ * @param {SupabaseEnv} [env] - Optional environment variables object.
+ * @returns {SupabaseClient} A Supabase client instance.
+ */
 export function createSupabaseClient(env?: SupabaseEnv): SupabaseClient {
   const { supabaseUrl, supabaseAnonKey } = resolveSupabaseConfig(env);
   return createClient<Database>(supabaseUrl, supabaseAnonKey);
@@ -31,6 +41,11 @@ export const cookieOptions: CookieOptionsWithName = {
   sameSite: "lax",
 };
 
+/**
+ * Parses a cookie header string into an array of name-value pairs.
+ * @param {string} cookieHeader - The cookie header string to parse.
+ * @returns {{ name: string; value: string }[]} An array of objects, each containing the name and value of a cookie.
+ */
 function parseCookieHeader(cookieHeader: string): { name: string; value: string }[] {
   if (!cookieHeader) return [];
 
@@ -40,6 +55,14 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
   });
 }
 
+/**
+ * Creates a Supabase server-side client instance.
+ * @param {object} context - The context object containing headers, cookies, and optional environment variables.
+ * @param {Headers} context.headers - The headers object from the request.
+ * @param {AstroCookies} context.cookies - The Astro cookies object.
+ * @param {SupabaseEnv} [context.env] - Optional environment variables object.
+ * @returns {SupabaseClient} A Supabase client instance configured for server-side usage.
+ */
 export function createSupabaseServerInstance(context: {
   headers: Headers;
   cookies: AstroCookies;

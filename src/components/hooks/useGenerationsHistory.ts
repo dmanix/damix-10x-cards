@@ -6,6 +6,12 @@ import { normalizeQuery, parseGenerationsQueryFromUrl, toUrlSearchParams } from 
 
 const DEFAULT_QUERY = parseGenerationsQueryFromUrl("");
 
+/**
+ * Hook for managing and fetching generations history with pagination and filtering.
+ *
+ * @param returnTo - The URL to return to if the user is unauthorized.
+ * @returns An object containing the query parameters, list state, fetching status, and functions to update the query and refetch data.
+ */
 export function useGenerationsHistory(returnTo = "/account") {
   const [query, setQuery] = useState<GenerationsQueryVm>(() => {
     if (typeof window === "undefined") {
@@ -18,14 +24,25 @@ export function useGenerationsHistory(returnTo = "/account") {
   const [isFetching, setIsFetching] = useState(false);
   const [refetchToken, setRefetchToken] = useState(0);
 
+  /**
+   * Updates the query parameters for fetching generations.
+   * @param nextQuery - The new query parameters.
+   */
   const updateQuery = useCallback((nextQuery: GenerationsQueryVm) => {
     setQuery(normalizeQuery(nextQuery));
   }, []);
 
+  /**
+   * Partially updates the query parameters for fetching generations.
+   * @param patch - The partial query parameters to update.
+   */
   const patchQuery = useCallback((patch: Partial<GenerationsQueryVm>) => {
     setQuery((prev) => normalizeQuery({ ...prev, ...patch }));
   }, []);
 
+  /**
+   * Refetches the generations data.
+   */
   const refetch = useCallback(() => {
     setRefetchToken((token) => token + 1);
   }, []);

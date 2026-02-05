@@ -2,6 +2,11 @@ import type { FlashcardListResponse, GenerationListResponse } from "@/types";
 import type { DashboardApiErrorVm, RecentFlashcardsVm, RecentGenerationsVm } from "./types";
 import { mapFlashcardDtoToRecentVm, mapGenerationDtoToRecentVm } from "./types";
 
+/**
+ * Type guard to check if an error object has a message property of type string.
+ * @param error - The error object to check.
+ * @returns True if the error object has a message property of type string, false otherwise.
+ */
 function hasErrorMessage(error: unknown): error is { message: string } {
   return (
     typeof error === "object" &&
@@ -11,6 +16,12 @@ function hasErrorMessage(error: unknown): error is { message: string } {
   );
 }
 
+/**
+ * Maps an unknown error to a DashboardApiErrorVm object.
+ * @param error - The error to map.
+ * @param status - The HTTP status code, if available.
+ * @returns A DashboardApiErrorVm object representing the error.
+ */
 function mapDashboardApiError(error: unknown, status?: number): DashboardApiErrorVm {
   if (status === 401) {
     return {
@@ -55,6 +66,13 @@ function mapDashboardApiError(error: unknown, status?: number): DashboardApiErro
   };
 }
 
+/**
+ * Fetches data from a URL with a timeout.
+ * @param input - The URL to fetch.
+ * @param init - The request initialization options.
+ * @param timeoutMs - The timeout in milliseconds.
+ * @returns A promise that resolves to the response.
+ */
 async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs = 10000): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -66,6 +84,11 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, tim
   }
 }
 
+/**
+ * Retrieves the most recent flashcards.
+ * @returns A promise that resolves to a RecentFlashcardsVm object.
+ * @throws {DashboardApiErrorVm} - If an API error occurs.
+ */
 export async function getRecentFlashcards(): Promise<RecentFlashcardsVm> {
   // page=1, pageSize=5, sort=updatedAt, order=desc
   try {
@@ -95,6 +118,11 @@ export async function getRecentFlashcards(): Promise<RecentFlashcardsVm> {
   }
 }
 
+/**
+ * Retrieves the most recent generations.
+ * @returns A promise that resolves to a RecentGenerationsVm object.
+ * @throws {DashboardApiErrorVm} - If an API error occurs.
+ */
 export async function getRecentGenerations(): Promise<RecentGenerationsVm> {
   // page=1, pageSize=5, sort=createdAt, order=desc
   try {

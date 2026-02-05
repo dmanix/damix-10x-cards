@@ -2,6 +2,10 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
+/**
+ * Configuration object for Vitest, a testing framework.
+ * @see {@link https://vitest.dev/config/}
+ */
 export default defineConfig({
   plugins: [react()],
   test: {

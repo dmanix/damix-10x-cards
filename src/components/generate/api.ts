@@ -118,6 +118,10 @@ export function mapNetworkError(): ApiErrorVm {
   };
 }
 
+/**
+ * @param {("generation" | "save")} context
+ * @returns {ApiErrorVm}
+ */
 function mapTimeoutError(context: "generation" | "save"): ApiErrorVm {
   const message =
     context === "generation"
@@ -131,6 +135,12 @@ function mapTimeoutError(context: "generation" | "save"): ApiErrorVm {
   };
 }
 
+/**
+ * @param {RequestInfo | URL} input
+ * @param {RequestInit} init
+ * @param {number} timeoutMs
+ * @returns {Promise<Response>}
+ */
 async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);

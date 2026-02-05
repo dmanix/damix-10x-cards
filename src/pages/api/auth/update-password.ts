@@ -15,6 +15,13 @@ const updateInputSchema = z
     path: ["passwordConfirm"],
   });
 
+/**
+ * Extracts the request input based on the content type.
+ *
+ * @param {Request} request - The request object.
+ * @param {string} contentType - The content type of the request.
+ * @returns {Promise<unknown>} - A promise that resolves to the request input.
+ */
 async function getRequestInput(request: Request, contentType: string): Promise<unknown> {
   if (contentType.includes("application/json")) return request.json();
 
@@ -25,6 +32,13 @@ async function getRequestInput(request: Request, contentType: string): Promise<u
   };
 }
 
+/**
+ * Creates a JSON response.
+ *
+ * @param {number} status - The HTTP status code.
+ * @param {unknown} data - The data to be stringified as JSON.
+ * @returns {Response} - The JSON response.
+ */
 function json(status: number, data: unknown): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -34,6 +48,13 @@ function json(status: number, data: unknown): Response {
   });
 }
 
+/**
+ * Builds a redirect response for the update password page.
+ *
+ * @param {Request} request - The request object.
+ * @param {string} [errorCode] - Optional error code to add to the redirect URL.
+ * @returns {Response} - The redirect response.
+ */
 function buildUpdateRedirect(request: Request, errorCode?: string): Response {
   const redirectUrl = new URL("/auth/reset-password", request.url);
   redirectUrl.searchParams.set("mode", "update");
@@ -44,6 +65,15 @@ function buildUpdateRedirect(request: Request, errorCode?: string): Response {
   });
 }
 
+/**
+ * Astro API route for handling password reset form submissions.
+ *
+ * @param {object} context - The Astro API route context.
+ * @param {Request} context.request - The request object.
+ * @param {import('astro').AstroCookies} context.cookies - The cookies object.
+ * @param {object} context.locals - The locals object.
+ * @returns {Promise<Response>} - A promise that resolves to the response object.
+ */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const contentType = request.headers.get("content-type") ?? "";
   const accept = request.headers.get("accept") ?? "";

@@ -41,6 +41,11 @@ export class FlashcardNotFoundError extends Error {
   }
 }
 
+/**
+ * Converts a FlashcardRow object to a FlashcardDto object.
+ * @param {FlashcardRow} row - The FlashcardRow object to convert.
+ * @returns {FlashcardDto} The converted FlashcardDto object.
+ */
 const toFlashcardDto = (row: FlashcardRow): FlashcardDto => ({
   id: row.id,
   front: row.front,
@@ -52,8 +57,18 @@ const toFlashcardDto = (row: FlashcardRow): FlashcardDto => ({
 });
 
 export class FlashcardService {
+  /**
+   * @param supabase
+   */
   constructor(private readonly supabase: SupabaseClient) {}
 
+  /**
+   * Validates that the user owns the specified generations.
+   * @param userId The ID of the user.
+   * @param generationIds The IDs of the generations to validate.
+   * @throws {Error} If there is an error fetching the generations.
+   * @throws {GenerationOwnershipError} If the user does not own all of the specified generations.
+   */
   async validateGenerationOwnership(userId: string, generationIds: string[]): Promise<void> {
     if (generationIds.length === 0) {
       return;
@@ -77,6 +92,11 @@ export class FlashcardService {
     }
   }
 
+  /**
+   * Builds a map of generation IDs to accept counts based on the given flashcards.
+   * @param flashcards The flashcards to build the accept counts from.
+   * @returns A map of generation IDs to accept counts.
+   */
   buildAcceptCounts(flashcards: CreateFlashcardsInput[]): GenerationAcceptCounts {
     return flashcards.reduce<GenerationAcceptCounts>((acc, flashcard) => {
       if (!flashcard.generationId) {
@@ -95,6 +115,13 @@ export class FlashcardService {
     }, {});
   }
 
+  /**
+   * Creates new flashcards for a user.
+   * @param userId The ID of the user creating the flashcards.
+   * @param flashcards An array of flashcard input data.
+   * @returns A promise that resolves to an array of created flashcard DTOs.
+   * @throws {Error} If the flashcard insertion fails.
+   */
   async createFlashcards(userId: string, flashcards: CreateFlashcardsInput[]): Promise<FlashcardDto[]> {
     const inserts: FlashcardInsert[] = flashcards.map((flashcard) => ({
       front: flashcard.front,
@@ -119,6 +146,13 @@ export class FlashcardService {
     return data.map((row) => toFlashcardDto(row as FlashcardRow));
   }
 
+  /**
+   * Lists flashcards for a user based on the provided query parameters.
+   * @param userId The ID of the user.
+   * @param query The query parameters for listing flashcards.
+   * @returns A promise that resolves to a FlashcardListResponse object.
+   * @throws {Error} If there is an error listing the flashcards.
+   */
   async listFlashcards(userId: string, query: FlashcardListQuery): Promise<FlashcardListResponse> {
     const { page = 1, pageSize = 20, sort = "createdAt", order = "desc", source, search, since } = query;
     const from = (page - 1) * pageSize;
@@ -157,6 +191,13 @@ export class FlashcardService {
     };
   }
 
+  /**
+   * Retrieves a flashcard by its ID.
+   * @param userId The ID of the user.
+   * @param id The ID of the flashcard to retrieve.
+   * @returns A promise that resolves to a FlashcardDto object or null if not found.
+   * @throws {Error} If there is an error fetching the flashcard.
+   */
   async getFlashcardById(userId: string, id: string): Promise<FlashcardDto | null> {
     const { data, error } = await this.supabase
       .from("flashcards")
@@ -172,6 +213,13 @@ export class FlashcardService {
     return data ? toFlashcardDto(data as FlashcardRow) : null;
   }
 
+  /**
+   * Applies the given accept counts to the corresponding generations.
+   * @param userId The ID of the user.
+   * @param acceptCounts The accept counts to apply.
+   * @throws {Error} If there is an error loading or updating the generation counts.
+   * @throws {GenerationOwnershipError} If the user does not own all of the specified generations.
+   */
   private async applyAcceptCounts(userId: string, acceptCounts: GenerationAcceptCounts): Promise<void> {
     const generationIds = Object.keys(acceptCounts);
     if (generationIds.length === 0) {
@@ -221,6 +269,15 @@ export class FlashcardService {
     );
   }
 
+  /**
+   * Updates an existing flashcard.
+   * @param userId The ID of the user performing the update.
+   * @param flashcardId The ID of the flashcard to update.
+   * @param command The update command containing the new values.
+   * @returns A promise that resolves to the updated flashcard data.
+   * @throws {Error} If there is an error loading or updating the flashcard.
+   * @throws {FlashcardNotFoundError} If the flashcard is not found or not owned by the user.
+   */
   async updateFlashcard(
     userId: string,
     flashcardId: string,
@@ -285,6 +342,13 @@ export class FlashcardService {
     };
   }
 
+  /**
+   * Deletes a flashcard.
+   * @param userId The ID of the user performing the deletion.
+   * @param flashcardId The ID of the flashcard to delete.
+   * @throws {Error} If there is an error loading or deleting the flashcard.
+   * @throws {FlashcardNotFoundError} If the flashcard is not found or not owned by the user.
+   */
   async deleteFlashcard(userId: string, flashcardId: string): Promise<void> {
     const { data: existing, error: selectError } = await this.supabase
       .from<FlashcardRow>("flashcards")
@@ -321,6 +385,12 @@ export class FlashcardService {
     }
   }
 
+  /**
+   * Resolves the source of a flashcard based on its current source and whether it has been changed.
+   * @param current The current source of the flashcard.
+   * @param hasChanges Whether the flashcard has been changed.
+   * @returns The resolved source of the flashcard.
+   */
   private resolveSource(current: FlashcardSource, hasChanges: boolean): FlashcardSource {
     if (current === "ai" && hasChanges) {
       return "ai-edited";
@@ -328,10 +398,22 @@ export class FlashcardService {
     return current;
   }
 
+  /**
+   * Determines whether a generation adjustment is required based on the flashcard's row and target source.
+   * @param row The flashcard row.
+   * @param targetSource The target source.
+   * @returns True if a generation adjustment is required, false otherwise.
+   */
   private requiresGenerationAdjustment(row: FlashcardRow, targetSource: FlashcardSource): boolean {
     return row.source === "ai" && targetSource === "ai-edited" && Boolean(row.generation_id);
   }
 
+  /**
+   * Marks a generation as edited by incrementing the accepted_edited_count and decrementing the accepted_original_count.
+   * @param userId The ID of the user.
+   * @param generationId The ID of the generation to mark as edited.
+   * @throws {Error} If there is an error loading or updating the generation.
+   */
   private async markGenerationEdited(userId: string, generationId: string): Promise<void> {
     const { data: generation, error: generationError } = await this.supabase
       .from<GenerationRow>("generations")
@@ -365,6 +447,13 @@ export class FlashcardService {
     }
   }
 
+  /**
+   * Decrements the generation counts based on the source of the flashcard.
+   * @param userId The ID of the user.
+   * @param generationId The ID of the generation.
+   * @param source The source of the flashcard.
+   * @throws {Error} If there is an error loading or updating the generation counts.
+   */
   private async decrementGenerationCounts(
     userId: string,
     generationId: string,

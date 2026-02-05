@@ -18,7 +18,7 @@ export interface GenerationRowVm {
   createdAt: string;
   createdAtLabel: string;
   finishedAt: string | null;
-  finishedAtLabel: string;
+  finishedAtLabel: string | null;
   generatedCount: number | null;
   acceptedTotalCount: number;
   acceptedOriginalCount: number | null;
@@ -86,6 +86,13 @@ const STATUS_VALUES: GenerationStatus[] = ["pending", "succeeded", "failed"];
 const SORT_VALUES: GenerationsQueryVm["sort"][] = ["createdAt", "finishedAt"];
 const ORDER_VALUES: GenerationsQueryVm["order"][] = ["desc", "asc"];
 
+/**
+ * Clamps a number between a minimum and maximum value.
+ * @param {number} value The number to clamp.
+ * @param {number} min The minimum value.
+ * @param {number} max The maximum value.
+ * @returns {number} The clamped number.
+ */
 function clampNumber(value: number, min: number, max: number) {
   if (Number.isNaN(value)) {
     return min;
@@ -94,6 +101,11 @@ function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+/**
+ * Converts a string to a GenerationStatusFilterVm.
+ * @param {string | null} value The string to convert.
+ * @returns {GenerationStatusFilterVm} The converted GenerationStatusFilterVm.
+ */
 function toStatusFilter(value: string | null): GenerationStatusFilterVm {
   if (value && STATUS_VALUES.includes(value as GenerationStatus)) {
     return value as GenerationStatusFilterVm;
@@ -102,6 +114,11 @@ function toStatusFilter(value: string | null): GenerationStatusFilterVm {
   return "all";
 }
 
+/**
+ * Parses a GenerationsQueryVm from a URL search string.
+ * @param {string} search The URL search string.
+ * @returns {GenerationsQueryVm} The parsed GenerationsQueryVm.
+ */
 export function parseGenerationsQueryFromUrl(search: string): GenerationsQueryVm {
   const params = new URLSearchParams(search);
   const pageParam = Number.parseInt(params.get("page") ?? "", 10);
@@ -125,6 +142,11 @@ export function parseGenerationsQueryFromUrl(search: string): GenerationsQueryVm
   };
 }
 
+/**
+ * Normalizes a GenerationsQueryVm.
+ * @param {GenerationsQueryVm} query The GenerationsQueryVm to normalize.
+ * @returns {GenerationsQueryVm} The normalized GenerationsQueryVm.
+ */
 export function normalizeQuery(query: GenerationsQueryVm): GenerationsQueryVm {
   return {
     ...query,
@@ -136,6 +158,11 @@ export function normalizeQuery(query: GenerationsQueryVm): GenerationsQueryVm {
   };
 }
 
+/**
+ * Converts a GenerationsQueryVm to a URL search string.
+ * @param {GenerationsQueryVm} query The GenerationsQueryVm to convert.
+ * @returns {string} The URL search string.
+ */
 export function toUrlSearchParams(query: GenerationsQueryVm): string {
   const params = new URLSearchParams();
 
@@ -151,6 +178,12 @@ export function toUrlSearchParams(query: GenerationsQueryVm): string {
   return params.toString();
 }
 
+/**
+ * Computes the total number of pages.
+ * @param {number} total The total number of items.
+ * @param {number} pageSize The number of items per page.
+ * @returns {number} The total number of pages.
+ */
 export function computeTotalPages(total: number, pageSize: number) {
   if (total <= 0) {
     return 1;
@@ -159,6 +192,12 @@ export function computeTotalPages(total: number, pageSize: number) {
   return Math.max(1, Math.ceil(total / pageSize));
 }
 
+/**
+ * Formats a UTC ISO string to a localized date and time string.
+ * @param {string | null} isoUtc The UTC ISO string to format.
+ * @param {string} [fallback="—"] The fallback string to use if the ISO string is null or invalid.
+ * @returns {string} The formatted date and time string.
+ */
 export function formatLocalDateTime(isoUtc: string | null, fallback = "—") {
   if (!isoUtc) {
     return fallback;
@@ -172,6 +211,12 @@ export function formatLocalDateTime(isoUtc: string | null, fallback = "—") {
   return new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
+/**
+ * Truncates a message to a specified limit.
+ * @param {string | null | undefined} value The message to truncate.
+ * @param {number} [limit=120] The maximum length of the message.
+ * @returns {string | null} The truncated message, or null if the input is null or undefined.
+ */
 function truncateMessage(value: string | null | undefined, limit = 120): string | null {
   if (!value) {
     return null;
@@ -184,6 +229,11 @@ function truncateMessage(value: string | null | undefined, limit = 120): string 
   return `${value.slice(0, Math.max(0, limit - 3))}...`;
 }
 
+/**
+ * Maps a GenerationDto to a GenerationRowVm.
+ * @param {GenerationDto} dto The GenerationDto to map.
+ * @returns {GenerationRowVm} The mapped GenerationRowVm.
+ */
 export function mapGenerationDtoToRowVm(dto: GenerationDto): GenerationRowVm {
   const acceptedOriginal = dto.acceptedOriginalCount ?? 0;
   const acceptedEdited = dto.acceptedEditedCount ?? 0;

@@ -18,6 +18,13 @@ const registerInputSchema = z
     path: ["passwordConfirm"],
   });
 
+/**
+ * Extracts the request input based on the content type.
+ * @async
+ * @param   request     The request object.
+ * @param   contentType The content type of the request.
+ * @returns             A promise that resolves to the request input.
+ */
 async function getRequestInput(request: Request, contentType: string): Promise<unknown> {
   if (contentType.includes("application/json")) return request.json();
 
@@ -30,6 +37,13 @@ async function getRequestInput(request: Request, contentType: string): Promise<u
   };
 }
 
+/**
+ * Creates a JSON response.
+ *
+ * @param   status The HTTP status code.
+ * @param   data   The data to be stringified as JSON.
+ * @returns        A Response object with the provided data and headers.
+ */
 function json(status: number, data: unknown): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -39,12 +53,21 @@ function json(status: number, data: unknown): Response {
   });
 }
 
+/**
+ * Checks if the user is already registered based on the error message.
+ *
+ * @param   error The error object, which may contain a message.
+ * @returns       True if the error message indicates that the user is already registered, false otherwise.
+ */
 function isUserAlreadyRegistered(error: { message?: string | null } | null): boolean {
   if (!error?.message) return false;
   const normalized = error.message.toLowerCase();
   return normalized.includes("already registered") || normalized.includes("already exists");
 }
 
+/**
+ * Handles the POST request for user registration.
+ */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const contentType = request.headers.get("content-type") ?? "";
   const accept = request.headers.get("accept") ?? "";

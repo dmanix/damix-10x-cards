@@ -70,6 +70,14 @@ const SOURCE_VALUES: FlashcardSource[] = ["ai", "ai-edited", "manual"];
 const SORT_VALUES: FlashcardsQueryVm["sort"][] = ["createdAt", "updatedAt"];
 const ORDER_VALUES: FlashcardsQueryVm["order"][] = ["asc", "desc"];
 
+/**
+ * Clamps a number within a specified range.
+ *
+ * @param value The number to clamp.
+ * @param min The minimum allowed value.
+ * @param max The maximum allowed value.
+ * @returns The clamped number.
+ */
 function clampNumber(value: number, min: number, max: number) {
   if (Number.isNaN(value)) {
     return min;
@@ -78,6 +86,12 @@ function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+/**
+ * Parses a flashcards query object from a URL search string.
+ *
+ * @param search The URL search string.
+ * @returns The parsed flashcards query object.
+ */
 export function parseFlashcardsQueryFromUrl(search: string): FlashcardsQueryVm {
   const params = new URLSearchParams(search);
   const pageParam = Number.parseInt(params.get("page") ?? "", 10);
@@ -105,6 +119,12 @@ export function parseFlashcardsQueryFromUrl(search: string): FlashcardsQueryVm {
   };
 }
 
+/**
+ * Converts a flashcards query object to a URL search parameters string.
+ *
+ * @param query The flashcards query object.
+ * @returns The URL search parameters string.
+ */
 export function toUrlSearchParams(query: FlashcardsQueryVm): string {
   const params = new URLSearchParams();
 
@@ -124,6 +144,12 @@ export function toUrlSearchParams(query: FlashcardsQueryVm): string {
   return params.toString();
 }
 
+/**
+ * Maps a FlashcardDto object to a FlashcardCardVm object.
+ *
+ * @param dto The FlashcardDto object to map.
+ * @returns The mapped FlashcardCardVm object.
+ */
 export function mapFlashcardDtoToCardVm(dto: FlashcardDto): FlashcardCardVm {
   return {
     id: dto.id,
@@ -137,6 +163,13 @@ export function mapFlashcardDtoToCardVm(dto: FlashcardDto): FlashcardCardVm {
   };
 }
 
+/**
+ * Computes the total number of pages based on the total number of items and the page size.
+ *
+ * @param total The total number of items.
+ * @param pageSize The number of items per page.
+ * @returns The total number of pages.
+ */
 export function computeTotalPages(total: number, pageSize: number) {
   if (total <= 0) {
     return 1;

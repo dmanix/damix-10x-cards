@@ -9,6 +9,11 @@ const LEVEL_ORDER: Record<LogLevel, number> = {
   silent: 50,
 };
 
+/**
+ * Normalizes a string value to a LogLevel.
+ * @param value The string value to normalize.
+ * @returns A LogLevel based on the input, or "info" if the input is invalid.
+ */
 const normalizeLevel = (value?: string): LogLevel => {
   const lowered = value?.toLowerCase();
   if (lowered === "debug" || lowered === "info" || lowered === "warn" || lowered === "error" || lowered === "silent") {
@@ -18,6 +23,11 @@ const normalizeLevel = (value?: string): LogLevel => {
   return "info";
 };
 
+/**
+ * Normalizes a string value to a LogDestination.
+ * @param value The string value to normalize.
+ * @returns A LogDestination based on the input, or "console" if the input is invalid.
+ */
 const normalizeDestination = (value?: string): LogDestination => {
   const lowered = value?.toLowerCase();
   if (lowered === "console" || lowered === "file" || lowered === "both" || lowered === "none") {
@@ -33,6 +43,11 @@ const isCloudflareRuntime =
   typeof navigator.userAgent === "string" &&
   navigator.userAgent.includes("Cloudflare-Workers");
 
+/**
+ * Opens a file stream for writing logs. Only available in Node.js runtime.
+ * @param filePath The path to the log file.
+ * @returns A promise that resolves to a file stream, or null if the stream cannot be opened.
+ */
 const openFileStream = async (filePath: string) => {
   if (!isNodeRuntime || isCloudflareRuntime) return null;
   try {
@@ -56,6 +71,11 @@ export interface Logger {
   error: (payload: Record<string, unknown>) => void;
 }
 
+/**
+ * Reads an environment variable from `import.meta.env` (if available) or `process.env`.
+ * @param key The name of the environment variable to read.
+ * @returns The value of the environment variable, or undefined if it is not set.
+ */
 const readEnv = (key: string): string | undefined => {
   // In Astro/Vite runtime we have import.meta.env; in Node scripts (e.g. Playwright teardown) we don't.
   const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
@@ -63,6 +83,11 @@ const readEnv = (key: string): string | undefined => {
   return typeof process !== "undefined" ? process.env[key] : undefined;
 };
 
+/**
+ * Creates a logger instance with the specified options.
+ * @param options The logger options.
+ * @returns A logger instance.
+ */
 export const createLogger = (options?: {
   level?: LogLevel;
   destination?: LogDestination;
@@ -81,6 +106,10 @@ export const createLogger = (options?: {
 
   let fileStreamPromise: ReturnType<typeof openFileStream> | null = null;
 
+  /**
+   * Writes a log payload to the log file.
+   * @param payload The log payload to write.
+   */
   const writeToFile = (payload: Record<string, unknown>) => {
     if (destination !== "file" && destination !== "both") return;
     if (!fileStreamPromise) {
@@ -97,6 +126,12 @@ export const createLogger = (options?: {
     });
   };
 
+  /**
+   * Logs a message to the console and/or a file.
+   * @param value The log level.
+   * @param payload The log payload.
+   * @param consoleMethod The console method to use.
+   */
   const log = (
     value: LogLevel,
     payload: Record<string, unknown>,

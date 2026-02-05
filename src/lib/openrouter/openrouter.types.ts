@@ -13,7 +13,15 @@ export class OpenRouterTimeoutError extends Error {
   }
 }
 
+/**
+ * Custom error class for representing errors originating from the upstream OpenRouter API.
+ */
 export class OpenRouterUpstreamError extends Error {
+  /**
+   * @param message - The error message.
+   * @param status - The HTTP status code, if available.
+   * @param code - The OpenRouter API error code, if available.
+   */
   constructor(
     message: string,
     public readonly status?: number,
@@ -31,7 +39,14 @@ export class OpenRouterInvalidResponseError extends Error {
   }
 }
 
+/**
+ * Custom error class for representing errors due to invalid output from the OpenRouter API.
+ */
 export class OpenRouterInvalidOutputError extends Error {
+  /**
+   * @param message - The error message.
+   * @param validationError - The underlying validation error, if available.
+   */
   constructor(
     message: string,
     public readonly validationError?: unknown
@@ -50,6 +65,9 @@ export interface OpenRouterChoice {
   finish_reason?: string;
 }
 
+/**
+ * Represents the structure of a response from the OpenRouter API.
+ */
 export interface OpenRouterResponse {
   id: string;
   model: string;

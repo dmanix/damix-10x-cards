@@ -45,6 +45,11 @@ export interface RecentGenerationsVm {
 }
 
 // Helpers
+/**
+ * Maps a FlashcardDto to a RecentFlashcardItemVm, truncating the front and back text.
+ * @param {FlashcardDto} dto - The FlashcardDto to map.
+ * @returns {RecentFlashcardItemVm} - The mapped RecentFlashcardItemVm.
+ */
 export function mapFlashcardDtoToRecentVm(dto: FlashcardDto): RecentFlashcardItemVm {
   const truncate = (str: string, n: number) => (str.length > n ? str.slice(0, n) + "..." : str);
 
@@ -57,6 +62,11 @@ export function mapFlashcardDtoToRecentVm(dto: FlashcardDto): RecentFlashcardIte
   };
 }
 
+/**
+ * Maps a GenerationDto to a RecentGenerationItemVm.
+ * @param {GenerationDto} dto - The GenerationDto to map.
+ * @returns {RecentGenerationItemVm} - The mapped RecentGenerationItemVm.
+ */
 export function mapGenerationDtoToRecentVm(dto: GenerationDto): RecentGenerationItemVm {
   return {
     id: dto.id,
