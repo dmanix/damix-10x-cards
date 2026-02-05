@@ -24,19 +24,20 @@ jobs:
       uses: przeprogramowani/ai-action@sync-docs
       with:
         GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        FILE_EXTENSIONS: ".js,.mjs"
-        EXCLUDED_DIRS: "node_modules,.git,dist,vendor"
+        FILE_EXTENSIONS: ".ts"
+        EXCLUDED_DIRS: "node_modules,.git,dist,vendor,e2e"
 
     - name: Create Pull Request if changes were made
       if: steps.ai_jsdoc_updater.outputs.files-updated-count > 0
       uses: peter-evans/create-pull-request@v7
       with:
-        #token: ${{ secrets.GH_PERSONAL_TOKEN }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        #token: ${{ secrets.GITHUB_TOKEN }}
         commit-message: "chore: Update JSDocs with AI Assistant"
         committer: GitHub <noreply@github.com>
         author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
         branch: chore/ai-jsdoc-updates
+        labels: "automated pr,documentation"
         delete-branch: true
         title: "AI JSDoc Updates"
         body: |
